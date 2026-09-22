@@ -1,0 +1,6 @@
+{
+  "name": "ARX TM Quantum - AI Human Brain Matrix",
+  "description": "WinGo prediction engine featuring AI Human Brain heuristics, Opposite Majority contrarian logic, and multi-state Matrix probability modeling.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
