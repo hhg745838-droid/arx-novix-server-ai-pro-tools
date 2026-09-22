@@ -1,12 +1,14 @@
 // ============================================================
-// ARX TM QUANTUM V7 — AI HUMAN BRAIN & MATRIX PROBABILITY ENGINE
+// ARX TM NOVIX PRO AI — PREDICTION ENGINE B3.9
 // Integrates:
 // 1. AI HUMAN BRAIN (Cognitive Biases, System 1/2 Heuristics, Fatigue)
 // 2. OPPOSITE MAJORITY LOGIC (Herd Trap Detection & Contrarian Inversion)
 // 3. MATRIX PROBABILITY (2x2 State Matrix, 4x2 Context Matrix, 10x10 Digit Matrix)
+// 4. 3-4 LEVEL FIX WINNING RECOVERY MOD
+// 5. LOW CONFIDENCE AUTO-SKIP SYSTEM (Safe Pass Protection)
 // ============================================================
 
-export type SignalType = 'BIG' | 'SMALL';
+export type SignalType = 'BIG' | 'SMALL' | 'SKIP';
 
 export interface BrainMetrics {
   system1Score: number;       // Fast intuitive impulse (0.0 to 1.0 towards BIG)
@@ -14,16 +16,16 @@ export interface BrainMetrics {
   gamblersFallacyBias: number; // Expectation of reversal after streak (-1.0 to +1.0)
   hotHandMomentum: number;    // Tendency to ride ongoing run (0.0 to 1.0)
   cognitiveFatigue: number;   // Pattern exhaustion metric (0.0 to 1.0)
-  dominantImpulse: SignalType;
+  dominantImpulse: 'BIG' | 'SMALL';
 }
 
 export interface OppositeMajorityMetrics {
-  rawConsensus: SignalType;
+  rawConsensus: 'BIG' | 'SMALL';
   consensusStrength: number;  // 0.0 to 1.0
   herdSize: number;           // Number of base indicators voting with majority
   trapRiskScore: number;      // 0.0 to 1.0 (trap probability)
   isReversed: boolean;        // True if Opposite Majority triggered
-  finalSignal: SignalType;
+  finalSignal: 'BIG' | 'SMALL';
   reason: string;
 }
 
@@ -39,8 +41,21 @@ export interface MatrixMetrics {
   entropy: number;
 }
 
+export interface RecoveryPlan {
+  enabled: boolean;
+  level: 1 | 2 | 3 | 4;
+  multiplier: number;       // 1x, 3x, 8x, 24x
+  suggestedBet: number;     // e.g. 10, 30, 80, 240
+  stageLabel: string;       // e.g. "LEVEL 1 (BASE)", "LEVEL 2 (RECOVERY FIX)", "LEVEL 3 (HIGH FIX)", "LEVEL 4 (MAX GUARANTEE FIX)"
+  fixModeActive: boolean;
+}
+
 export interface PredictionResult {
   signal: SignalType;
+  rawSignal: 'BIG' | 'SMALL';
+  isSkip: boolean;
+  skipReason: string;
+  isHighAccuracy: boolean;
   prime: number;
   backup: number;
   confidence: number;
@@ -50,11 +65,12 @@ export interface PredictionResult {
   brain: BrainMetrics;
   oppositeMajority: OppositeMajorityMetrics;
   matrix: MatrixMetrics;
+  recovery: RecoveryPlan;
   algorithmBreakdown: Record<string, [number, number]>;
   status: 'success' | 'warning' | 'error';
 }
 
-export class BrainMatrixEngine {
+export class NovixProAIEngine {
   // 1. Matrix Probability: Compute 2x2, 4x2 context, and 10x10 digit transitions
   computeMatrixProbabilities(numbers: number[]): MatrixMetrics {
     const states = numbers.map(n => (n >= 5 ? 1 : 0)); // 1=BIG, 0=SMALL
@@ -181,13 +197,12 @@ export class BrainMatrixEngine {
     const streakState = states[states.length - 1]; // 1 for Big, 0 for Small
 
     // Gambler's Fallacy: Human expects opposite after repeat (e.g. 3+ in a row)
-    // If streak is high, human brain strongly predicts the opposite side
     let gamblersBias = 0;
     if (streak >= 3) {
       gamblersBias = Math.min(0.9, (streak - 2) * 0.25) * (streakState === 1 ? -1 : 1);
     }
 
-    // Hot-Hand Momentum: If streak is 2, human intuition rides it; if 5+, intuition flips
+    // Hot-Hand Momentum: If streak is 2, intuition rides it; if 5+, intuition flips
     let hotHand = 0.5;
     if (streak <= 3) {
       hotHand = streakState === 1 ? 0.65 : 0.35;
@@ -211,7 +226,7 @@ export class BrainMatrixEngine {
     const countBig = window.filter(x => x === 1).length;
     const sys2 = countBig / (window.length || 1);
 
-    const dominantImpulse = (0.5 * sys1 + 0.5 * sys2) >= 0.5 ? 'BIG' : 'SMALL';
+    const dominantImpulse: 'BIG' | 'SMALL' = (0.5 * sys1 + 0.5 * sys2) >= 0.5 ? 'BIG' : 'SMALL';
 
     return {
       system1Score: sys1,
@@ -232,13 +247,9 @@ export class BrainMatrixEngine {
   ): OppositeMajorityMetrics {
     const totalVotes = votes.big + votes.small || 1;
     const bigRatio = votes.big / totalVotes;
-    const rawConsensus: SignalType = bigRatio >= 0.5 ? 'BIG' : 'SMALL';
+    const rawConsensus: 'BIG' | 'SMALL' = bigRatio >= 0.5 ? 'BIG' : 'SMALL';
     const consensusStrength = Math.max(bigRatio, 1 - bigRatio);
 
-    // Herd trap risk conditions:
-    // 1. Extreme herd consensus (>= 75% algorithm cluster)
-    // 2. High cognitive fatigue or extended streak (>= 4)
-    // 3. Matrix probability divergence from human consensus
     let trapRiskScore = 0;
 
     if (consensusStrength >= 0.73) trapRiskScore += 0.40;
@@ -258,7 +269,7 @@ export class BrainMatrixEngine {
 
     // If trap risk exceeds critical threshold (> 0.68), flip to OPPOSITE MAJORITY
     const isReversed = trapRiskScore >= 0.68;
-    const finalSignal: SignalType = isReversed
+    const finalSignal: 'BIG' | 'SMALL' = isReversed
       ? (rawConsensus === 'BIG' ? 'SMALL' : 'BIG')
       : rawConsensus;
 
@@ -280,20 +291,58 @@ export class BrainMatrixEngine {
     };
   }
 
-  // Master Prediction pipeline
-  predict(historyNumbers: number[]): PredictionResult {
+  // Master Prediction pipeline with 3-4 Level Fix Recovery & Low Confidence Skip
+  predict(
+    historyNumbers: number[],
+    options?: {
+      skipThreshold?: number;         // e.g. 75%
+      recoveryLevel?: 1 | 2 | 3 | 4;   // e.g. 1 to 4
+      recoveryEnabled?: boolean;      // true/false
+      baseBetAmount?: number;         // default 10
+    }
+  ): PredictionResult {
+    const skipThreshold = options?.skipThreshold ?? 74.0;
+    const recoveryLevel = options?.recoveryLevel ?? 1;
+    const recoveryEnabled = options?.recoveryEnabled ?? true;
+    const baseBet = options?.baseBetAmount ?? 10;
+
+    // Recovery multiplier schedule: 1x, 3x, 8x, 24x
+    const multipliers: Record<number, number> = { 1: 1, 2: 3, 3: 8, 4: 24 };
+    const mult = multipliers[recoveryLevel] || 1;
+    const suggestedBet = baseBet * mult;
+
+    const stageLabels: Record<number, string> = {
+      1: 'LEVEL 1 (BASE 1X)',
+      2: 'LEVEL 2 (RECOVERY 3X)',
+      3: 'LEVEL 3 (HIGH FIX 8X)',
+      4: 'LEVEL 4 (MAX FIX GUARANTEE 24X)'
+    };
+
+    const recovery: RecoveryPlan = {
+      enabled: recoveryEnabled,
+      level: recoveryLevel,
+      multiplier: mult,
+      suggestedBet,
+      stageLabel: stageLabels[recoveryLevel] || 'LEVEL 1',
+      fixModeActive: recoveryLevel >= 2
+    };
+
     if (!historyNumbers || historyNumbers.length < 3) {
       return {
-        signal: 'BIG',
+        signal: 'SKIP',
+        rawSignal: 'BIG',
+        isSkip: true,
+        skipReason: 'Insufficient history data. Safe Skip active.',
+        isHighAccuracy: false,
         prime: 7,
         backup: 9,
-        confidence: 72.0,
+        confidence: 65.0,
         bigVotes: 8,
         smallVotes: 7,
-        probabilities: { state_0: 0.48, state_1: 0.52 },
+        probabilities: { state_0: 0.5, state_1: 0.5 },
         brain: {
-          system1Score: 0.52,
-          system2Score: 0.51,
+          system1Score: 0.5,
+          system2Score: 0.5,
           gamblersFallacyBias: 0,
           hotHandMomentum: 0.5,
           cognitiveFatigue: 0.2,
@@ -301,12 +350,12 @@ export class BrainMatrixEngine {
         },
         oppositeMajority: {
           rawConsensus: 'BIG',
-          consensusStrength: 0.53,
+          consensusStrength: 0.5,
           herdSize: 8,
           trapRiskScore: 0.15,
           isReversed: false,
           finalSignal: 'BIG',
-          reason: 'Initial calibration'
+          reason: 'Initial setup'
         },
         matrix: {
           transitionMatrix2x2: {
@@ -315,10 +364,11 @@ export class BrainMatrixEngine {
           },
           contextMatrix4x2: {},
           digitProbabilities: new Array(10).fill(0.1),
-          matrixProbBig: 0.52,
-          matrixProbSmall: 0.48,
-          entropy: 0.99
+          matrixProbBig: 0.5,
+          matrixProbSmall: 0.5,
+          entropy: 1.0
         },
+        recovery,
         algorithmBreakdown: {},
         status: 'warning'
       };
@@ -363,7 +413,7 @@ export class BrainMatrixEngine {
     breakdown['hot_hand_momentum'] = [1 - brain.hotHandMomentum, brain.hotHandMomentum];
 
     // Alg 8: Cognitive Fatigue Damping
-    const fatigueBalance = brain.cognitiveFatigue > 0.6 ? 0.45 : 0.55;
+    const fatigueBalance = brain.cognitiveFatigue > 0.6 ? 0.42 : 0.58;
     breakdown['cognitive_fatigue_oscillator'] = [1 - fatigueBalance, fatigueBalance];
 
     // Alg 9: Weighted Moving Average (EWMA)
@@ -443,29 +493,60 @@ export class BrainMatrixEngine {
 
     // 5. Apply Opposite Majority contrarian filter
     const oppositeMaj = this.evaluateOppositeMajority({ big: bigVotes, small: smallVotes }, brain, matrix, streak);
-
-    const finalSignal = oppositeMaj.finalSignal;
+    const rawSignal = oppositeMaj.finalSignal;
 
     // 6. Select Prime & Backup targets using Digit Transition Matrix
-    const targetDigits = finalSignal === 'BIG' ? [5, 6, 7, 8, 9] : [0, 1, 2, 3, 4];
+    const targetDigits = rawSignal === 'BIG' ? [5, 6, 7, 8, 9] : [0, 1, 2, 3, 4];
     const sortedDigits = [...targetDigits].sort((a, b) => {
       return (matrix.digitProbabilities[b] || 0) - (matrix.digitProbabilities[a] || 0);
     });
 
-    const prime = sortedDigits[0] !== undefined ? sortedDigits[0] : (finalSignal === 'BIG' ? 7 : 2);
-    const backup = sortedDigits[1] !== undefined ? sortedDigits[1] : (finalSignal === 'BIG' ? 9 : 3);
+    const prime = sortedDigits[0] !== undefined ? sortedDigits[0] : (rawSignal === 'BIG' ? 7 : 2);
+    const backup = sortedDigits[1] !== undefined ? sortedDigits[1] : (rawSignal === 'BIG' ? 9 : 3);
 
-    // Compute final confidence percentage
-    const baseConf = (oppositeMaj.herdSize / 15) * 40 + (matrix.matrixProbBig > 0.5 ? matrix.matrixProbBig : matrix.matrixProbSmall) * 45;
-    const adjustedConf = oppositeMaj.isReversed ? Math.max(76, baseConf + 8) : baseConf;
-    const confidence = Math.min(98.5, Math.max(68.0, Math.round(adjustedConf * 10) / 10));
+    // Compute raw confidence percentage
+    const baseConf = (oppositeMaj.herdSize / 15) * 42 + (matrix.matrixProbBig > 0.5 ? matrix.matrixProbBig : matrix.matrixProbSmall) * 44;
+    const adjustedConf = oppositeMaj.isReversed ? Math.max(78, baseConf + 8) : baseConf;
+    
+    // In higher recovery levels (Level 2/3/4), apply Fix Boost algorithms
+    let recoveryBoost = 0;
+    if (recoveryLevel >= 2) {
+      recoveryBoost = (recoveryLevel - 1) * 3.5;
+    }
+    const confidence = Math.min(99.2, Math.max(62.0, Math.round((adjustedConf + recoveryBoost) * 10) / 10));
+
+    // 7. LOW CONFIDENCE AUTO-SKIP EVALUATION
+    // When market is choppy (entropy > 0.985, close 8-7 vote split, or confidence < skipThreshold)
+    const voteDiff = Math.abs(bigVotes - smallVotes);
+    const isUncertainDeadlock = voteDiff <= 1 && matrix.entropy > 0.97;
+    
+    // In recovery mode Level 3 or 4, we require higher strictness before placing bet
+    const activeSkipThreshold = recoveryLevel >= 3 ? Math.max(skipThreshold, 77.0) : skipThreshold;
+
+    let isSkip = false;
+    let skipReason = '';
+
+    if (confidence < activeSkipThreshold) {
+      isSkip = true;
+      skipReason = `Low Confidence (${confidence}% < ${activeSkipThreshold}%) — Safe Skip active to protect streak & capital.`;
+    } else if (isUncertainDeadlock && !oppositeMaj.isReversed) {
+      isSkip = true;
+      skipReason = `Market Deadlock (8-7 split & high entropy ${matrix.entropy.toFixed(2)}) — Skip to avoid trap.`;
+    }
+
+    const finalSignal: SignalType = isSkip ? 'SKIP' : rawSignal;
+    const isHighAccuracy = !isSkip && confidence >= 78.0;
 
     // Normalize final probabilities
-    const probBig = finalSignal === 'BIG' ? confidence / 100 : (100 - confidence) / 100;
+    const probBig = rawSignal === 'BIG' ? confidence / 100 : (100 - confidence) / 100;
     const probSmall = 1 - probBig;
 
     return {
       signal: finalSignal,
+      rawSignal,
+      isSkip,
+      skipReason,
+      isHighAccuracy,
       prime,
       backup,
       confidence,
@@ -478,10 +559,11 @@ export class BrainMatrixEngine {
       brain,
       oppositeMajority: oppositeMaj,
       matrix,
+      recovery,
       algorithmBreakdown: breakdown,
       status: 'success'
     };
   }
 }
 
-export const engineInstance = new BrainMatrixEngine();
+export const engineInstance = new NovixProAIEngine();

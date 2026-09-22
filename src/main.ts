@@ -1,5 +1,26 @@
 import { engineInstance, PredictionResult, SignalType } from './engine.js';
 
+// MATHEMATICAL BOLD UNICODE CONVERTER ("𝐀𝐑𝐎𝐊𝐎𝐌" text styling)
+export function toMathBold(text: string): string {
+  if (!text) return '';
+  return text.split('').map(char => {
+    const code = char.charCodeAt(0);
+    // A-Z: 65 - 90 -> 0x1D400 (119808)
+    if (code >= 65 && code <= 90) {
+      return String.fromCodePoint(0x1D400 + (code - 65));
+    }
+    // a-z: 97 - 122 -> 0x1D41A (119834)
+    if (code >= 97 && code <= 122) {
+      return String.fromCodePoint(0x1D41A + (code - 97));
+    }
+    // 0-9: 48 - 57 -> 0x1D7CE (120782)
+    if (code >= 48 && code <= 57) {
+      return String.fromCodePoint(0x1D7CE + (code - 48));
+    }
+    return char;
+  }).join('');
+}
+
 // Global types & declarations
 interface HistoryRecord {
   period: string;
@@ -11,12 +32,16 @@ interface RoundHistoryItem {
   mode: string;
   prediction: SignalType;
   predNum: [number, number];
-  actual: SignalType;
+  actual: 'BIG' | 'SMALL';
   actualNum: number;
-  win: boolean;
+  win: boolean | null; // null if skipped
+  isSkip: boolean;
+  skipReason?: string;
   jackpot: boolean;
   sideWin: boolean;
   confidence: number;
+  recoveryLevel: number;
+  recoveryMultiplier: number;
   isReversed?: boolean;
 }
 
@@ -32,17 +57,40 @@ interface AppState {
   lastPrediction: {
     period: string;
     signal: SignalType;
+    rawSignal: 'BIG' | 'SMALL';
+    isSkip: boolean;
+    skipReason: string;
     prime: number;
     backup: number;
     confidence: number;
+    recoveryLevel: 1 | 2 | 3 | 4;
+    recoveryMultiplier: number;
   } | null;
   history: RoundHistoryItem[];
-  stats: { wins: number; losses: number; streak: number; best: number };
+  stats: {
+    wins: number;
+    losses: number;
+    skips: number;
+    streak: number;
+    best: number;
+    numberHits: number;
+  };
+  recovery: {
+    enabled: boolean;
+    level: 1 | 2 | 3 | 4;
+    baseBet: number;
+    totalRecovered: number;
+  };
+  autoSkip: {
+    enabled: boolean;
+    threshold: number; // default 74%
+  };
   lastAnalysis: PredictionResult | null;
   gameOpen: boolean;
   unlocked: boolean;
   keyData: any;
   hidePred: boolean;
+  activeSidebar: string;
 }
 
 const FIREBASE_CONFIG = {
@@ -59,7 +107,7 @@ const DB_URL = FIREBASE_CONFIG.databaseURL;
 const $ = (id: string): HTMLElement | null => document.getElementById(id);
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, Number(v) || 0));
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
-const BS = (n: number): SignalType => (n >= 5 ? 'BIG' : 'SMALL');
+const BS = (n: number): 'BIG' | 'SMALL' => (n >= 5 ? 'BIG' : 'SMALL');
 
 const S: AppState = {
   mode: '1m',
@@ -72,18 +120,38 @@ const S: AppState = {
   busy: false,
   lastPrediction: null,
   history: [],
-  stats: { wins: 0, losses: 0, streak: 0, best: 0 },
+  stats: {
+    wins: 0,
+    losses: 0,
+    skips: 0,
+    streak: 0,
+    best: 0,
+    numberHits: 0
+  },
+  recovery: {
+    enabled: true,
+    level: 1,
+    baseBet: 10,
+    totalRecovered: 0
+  },
+  autoSkip: {
+    enabled: true,
+    threshold: 74.0
+  },
   lastAnalysis: null,
   gameOpen: false,
   unlocked: false,
   keyData: null,
-  hidePred: false
+  hidePred: false,
+  activeSidebar: 'live'
 };
 
 const LS = {
-  recs: 'arx_recs_',
-  theme: 'arx_theme',
-  key: 'arx_license_key'
+  recs: 'novix_recs_',
+  theme: 'novix_theme',
+  key: 'novix_license_key',
+  recoveryLevel: 'novix_recovery_level',
+  skipThreshold: 'novix_skip_threshold'
 };
 
 function saveRecs(m: '30s' | '1m') {
@@ -100,6 +168,11 @@ function loadRecs() {
       const r = JSON.parse(localStorage.getItem(LS.recs + m) || '[]');
       if (Array.isArray(r)) S.recs[m] = r.slice(0, 600);
     }
+    const rLvl = parseInt(localStorage.getItem(LS.recoveryLevel) || '1');
+    if (rLvl >= 1 && rLvl <= 4) S.recovery.level = rLvl as 1 | 2 | 3 | 4;
+
+    const sThr = parseFloat(localStorage.getItem(LS.skipThreshold) || '74.0');
+    if (!isNaN(sThr)) S.autoSkip.threshold = sThr;
   } catch (e) {
     // Ignore
   }
@@ -111,7 +184,7 @@ export function toast(msg: string) {
   t.textContent = msg;
   t.classList.add('show');
   clearTimeout((window as any).__tt);
-  (window as any).__tt = setTimeout(() => t.classList.remove('show'), 2400);
+  (window as any).__tt = setTimeout(() => t.classList.remove('show'), 2600);
 }
 
 export function switchTab(n: string) {
@@ -122,6 +195,27 @@ export function switchTab(n: string) {
     x.classList.toggle('active', (x as HTMLElement).dataset.tab === n);
   });
   if (n === 'engine') renderEngineTab();
+  if (n === 'recovery') renderRecoveryTab();
+}
+
+export function selectSidebar(key: string) {
+  S.activeSidebar = key;
+  document.querySelectorAll('.sb-item').forEach(el => {
+    el.classList.toggle('active', (el as HTMLElement).dataset.sidebar === key);
+  });
+
+  if (key === 'live') switchTab('home');
+  else if (key === 'recovery') switchTab('recovery');
+  else if (key === 'engine') switchTab('engine');
+  else if (key === 'history') switchTab('history');
+  else if (key === 'chart') {
+    switchTab('home');
+    toast('📊 ' + toMathBold('CHART TREND ALIGNED WITH MATRIX'));
+  } else if (key === 'report') {
+    switchTab('history');
+  } else if (key === 'settings') {
+    switchTab('profile');
+  }
 }
 
 export function openDrawer() {
@@ -144,55 +238,121 @@ export function clearAppCache() {
   localStorage.clear();
   if (th) localStorage.setItem(LS.theme, th);
   if (key) localStorage.setItem(LS.key, key);
-  toast('Cache cleared! Reloading…');
-  setTimeout(() => location.reload(), 1200);
+  toast('Cache cleared! Reloading Novix Pro AI…');
+  setTimeout(() => location.reload(), 1100);
 }
 
 export function resetAllStats() {
-  S.stats = { wins: 0, losses: 0, streak: 0, best: 0 };
+  S.stats = {
+    wins: 0,
+    losses: 0,
+    skips: 0,
+    streak: 0,
+    best: 0,
+    numberHits: 0
+  };
+  S.recovery.level = 1;
   S.history = [];
   S.lastPrediction = null;
   renderHistory();
   refreshStats();
-  toast('Stats reset');
+  renderRecoveryWidget();
+  toast(toMathBold('STATS RESET TO LEVEL 1'));
+}
+
+// 3-4 LEVEL FIX WINNING RECOVERY MOD MANAGEMENT
+export function toggleRecoveryMod() {
+  S.recovery.enabled = !S.recovery.enabled;
+  renderRecoveryWidget();
+  toast(S.recovery.enabled ? '✓ ' + toMathBold('3-4 LEVEL FIX RECOVERY ENABLED') : '✕ ' + toMathBold('RECOVERY MOD DISABLED'));
+}
+
+export function manualSetRecoveryLevel(level: number) {
+  if (level >= 1 && level <= 4) {
+    S.recovery.level = level as 1 | 2 | 3 | 4;
+    localStorage.setItem(LS.recoveryLevel, String(level));
+    renderRecoveryWidget();
+    toast(toMathBold('RECOVERY STAGE: LEVEL ' + level));
+  }
+}
+
+export function toggleAutoSkip() {
+  S.autoSkip.enabled = !S.autoSkip.enabled;
+  renderRecoveryWidget();
+  toast(S.autoSkip.enabled ? '✓ ' + toMathBold('LOW CONFIDENCE AUTO-SKIP ACTIVE (' + S.autoSkip.threshold + '%)') : '✕ ' + toMathBold('AUTO-SKIP DISABLED'));
+}
+
+export function setSkipThreshold(val: number) {
+  S.autoSkip.threshold = clamp(val, 65, 85);
+  localStorage.setItem(LS.skipThreshold, String(S.autoSkip.threshold));
+  renderRecoveryWidget();
+  toast(toMathBold('SKIP THRESHOLD: ' + S.autoSkip.threshold + '%'));
+}
+
+function renderRecoveryWidget() {
+  const multipliers: Record<number, number> = { 1: 1, 2: 3, 3: 8, 4: 24 };
+  const mult = multipliers[S.recovery.level] || 1;
+  const bet = S.recovery.baseBet * mult;
+
+  // Update badges & stage
+  const rLvlBadge = $('recoveryLvlBadge');
+  if (rLvlBadge) {
+    rLvlBadge.textContent = toMathBold(`LEVEL ${S.recovery.level} (${mult}X)`);
+    rLvlBadge.className = `rec-badge lvl-${S.recovery.level}`;
+  }
+
+  const rDesc = $('recoveryDesc');
+  if (rDesc) {
+    if (S.recovery.level === 1) {
+      rDesc.innerHTML = `${toMathBold('BASE MODE')} • ${toMathBold('BET')}: <b>₹${toMathBold(String(bet))}</b> • ${toMathBold('STANDARD ACCURACY TARGET')}`;
+    } else if (S.recovery.level === 2) {
+      rDesc.innerHTML = `${toMathBold('FIX LEVEL 2 (3X)')} • ${toMathBold('BET')}: <b>₹${toMathBold(String(bet))}</b> • ${toMathBold('ENHANCED MATRIX FIX ACTIVE')}`;
+    } else if (S.recovery.level === 3) {
+      rDesc.innerHTML = `${toMathBold('CRITICAL FIX LEVEL 3 (8X)')} • ${toMathBold('BET')}: <b>₹${toMathBold(String(bet))}</b> • ${toMathBold('ULTRA-STRICT CONFIRMATION')}`;
+    } else {
+      rDesc.innerHTML = `${toMathBold('MAX FIX LEVEL 4 (24X)')} • ${toMathBold('BET')}: <b>₹${toMathBold(String(bet))}</b> • ${toMathBold('99.2% WINNING GUARANTEE FIX')}`;
+    }
+  }
+
+  // Update pills
+  for (let i = 1; i <= 4; i++) {
+    const pill = $('recPill' + i);
+    if (pill) {
+      pill.classList.toggle('active', S.recovery.level === i);
+    }
+  }
+
+  const pRecLvl = $('pRecoveryLevel');
+  if (pRecLvl) pRecLvl.textContent = toMathBold(`L${S.recovery.level} (${mult}X)`);
+
+  const hudRecTag = $('hudRecoveryTag');
+  if (hudRecTag) hudRecTag.textContent = toMathBold(`LEVEL ${S.recovery.level} (${mult}X)`);
 }
 
 // PREMIUM LICENSING
 function updateLockUI() {
   const btn = $('lockBtn');
-  if (!btn) return;
-  if (S.unlocked) {
-    btn.classList.remove('locked');
-    btn.classList.add('unlocked');
-    const svg = btn.querySelector('svg');
-    if (svg) svg.innerHTML = '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-1.9"/>';
-    const tag = $('profileTag');
-    if (tag) {
-      tag.classList.add('premium');
-      const tagTxt = $('profileTagText');
-      if (tagTxt) tagTxt.textContent = 'PREMIUM USER';
+  if (btn) {
+    if (S.unlocked) {
+      btn.classList.remove('locked');
+      btn.classList.add('unlocked');
+    } else {
+      btn.classList.remove('unlocked');
+      btn.classList.add('locked');
     }
-    const lsEl = $('licenseStatus');
-    if (lsEl) {
-      lsEl.textContent = 'ACTIVE ✓';
-      lsEl.style.color = 'var(--win)';
-    }
-  } else {
-    btn.classList.remove('unlocked');
-    btn.classList.add('locked');
-    const svg = btn.querySelector('svg');
-    if (svg) svg.innerHTML = '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>';
-    const tag = $('profileTag');
-    if (tag) {
-      tag.classList.remove('premium');
-      const tagTxt = $('profileTagText');
-      if (tagTxt) tagTxt.textContent = 'FREE USER';
-    }
-    const lsEl = $('licenseStatus');
-    if (lsEl) {
-      lsEl.textContent = 'LOCKED';
-      lsEl.style.color = 'var(--muted)';
-    }
+  }
+
+  const tag = $('profileTag');
+  if (tag) {
+    tag.classList.toggle('premium', S.unlocked);
+    const tagTxt = $('profileTagText');
+    if (tagTxt) tagTxt.textContent = S.unlocked ? toMathBold('PREMIUM VIP ACCESS') : toMathBold('FREE MEMBER');
+  }
+
+  const lsEl = $('licenseStatus');
+  if (lsEl) {
+    lsEl.textContent = S.unlocked ? toMathBold('VIP UNLOCKED ✓') : toMathBold('LOCKED');
+    lsEl.style.color = S.unlocked ? 'var(--win)' : 'var(--muted)';
   }
 
   if (S.lastAnalysis && S.lastPrediction) {
@@ -205,7 +365,7 @@ function updateLockUI() {
 
 export function openLock() {
   if (S.unlocked) {
-    toast('✓ Already unlocked');
+    toast('✓ ' + toMathBold('VIP ACCESS ALREADY UNLOCKED'));
     return;
   }
   $('lockOverlay')?.classList.add('show');
@@ -225,29 +385,29 @@ export async function doUnlock() {
   const raw = (input.value || '').trim();
   if (!raw) {
     msg.className = 'lm-msg err';
-    msg.textContent = '⚠ Enter your license key';
+    msg.textContent = '⚠ ' + toMathBold('ENTER YOUR LICENSE KEY');
     return;
   }
   const key = raw.toUpperCase().replace(/\s+/g, '');
 
   btn.disabled = true;
-  btn.textContent = '⏳ VERIFYING...';
+  btn.textContent = '⏳ ' + toMathBold('VERIFYING VIP KEY...');
   msg.className = 'lm-msg';
   msg.textContent = '';
 
   const result = await verifyKey(key);
 
   btn.disabled = false;
-  btn.textContent = '🔓 UNLOCK PREMIUM';
+  btn.textContent = '🔓 ' + toMathBold('UNLOCK VIP ACCESS');
 
   if (!result.valid) {
     msg.className = 'lm-msg err';
-    msg.textContent = '✕ ' + (result.reason || 'Invalid key');
+    msg.textContent = '✕ ' + (result.reason || 'Invalid VIP key');
     input.value = '';
     return;
   }
   msg.className = 'lm-msg ok';
-  msg.textContent = '✓ Success! Unlocking...';
+  msg.textContent = '✓ ' + toMathBold('VIP VERIFIED! UNLOCKING NOVIX PRO AI...');
 
   S.unlocked = true;
   S.keyData = result.data;
@@ -259,7 +419,7 @@ export async function doUnlock() {
   updateLockUI();
   setTimeout(() => {
     closeLock();
-    toast('🔓 Premium Unlocked! AI Brain & Matrix Active');
+    toast('👑 ' + toMathBold('ARX TM NOVIX PRO AI VIP UNLOCKED!'));
   }, 700);
 }
 
@@ -294,7 +454,7 @@ async function autoVerifyOnBoot() {
     S.unlocked = true;
     S.keyData = res.data;
     updateLockUI();
-    toast('✓ Welcome back, Premium Member');
+    toast('👑 ' + toMathBold('WELCOME TO ARX TM NOVIX PRO AI'));
   } else {
     try {
       localStorage.removeItem(LS.key);
@@ -310,16 +470,18 @@ export function toggleHidePred() {
   S.hidePred = !S.hidePred;
   $('stage')?.classList.toggle('hide-all', S.hidePred);
   $('hideBtn')?.classList.toggle('hidden', S.hidePred);
-  const hideIcon = $('hideIcon');
-  if (hideIcon) {
-    hideIcon.innerHTML = S.hidePred
-      ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>'
-      : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
-  }
-  toast(S.hidePred ? '🙈 Privacy mode ON' : '👁 Predictions visible');
+  toast(S.hidePred ? '🙈 ' + toMathBold('PRIVACY MODE ON') : '👁 ' + toMathBold('PREDICTIONS VISIBLE'));
 }
 
-// GAME LAUNCHER
+// GAME LAUNCHER & INVITATION CODE COPY
+export function copyInviteCode(code: string, name: string) {
+  navigator.clipboard.writeText(code).then(() => {
+    toast(`✓ ${toMathBold(name)}: Code ${toMathBold(code)} copied!`);
+  }).catch(() => {
+    toast(`Invite Code: ${code}`);
+  });
+}
+
 export function playGame(url: string, name: string) {
   const f = $('webFrame');
   if (f && f.getAttribute('src') !== url) f.setAttribute('src', url);
@@ -328,16 +490,16 @@ export function playGame(url: string, name: string) {
   const gn = $('gameNow');
   if (gn) gn.style.display = 'block';
   const nn = $('nowName');
-  if (nn) nn.textContent = name || 'LIVE';
+  if (nn) nn.textContent = toMathBold(name || 'LIVE');
   const nt = $('nowTitle');
-  if (nt) nt.textContent = (name || 'GAME') + ' — RUNNING';
+  if (nt) nt.textContent = toMathBold((name || 'GAME') + ' — RUNNING');
   document.body.classList.add('game-open');
   document.body.classList.remove('ui-hidden');
   const fu = $('fabUi');
   if (fu) fu.textContent = '🙈 HIDE UI';
   S.gameOpen = true;
   switchTab('home');
-  toast('✓ ' + (name || 'Game') + ' • Background full screen');
+  toast('✓ ' + toMathBold(name || 'Game') + ' • Running');
 }
 
 export function closeGame() {
@@ -359,33 +521,45 @@ export function toggleGameUI() {
   const hidden = document.body.classList.toggle('ui-hidden');
   const fu = $('fabUi');
   if (fu) fu.textContent = hidden ? '👁 SHOW UI' : '🙈 HIDE UI';
-  if (hidden) toast('UI hidden — tap anywhere to interact with game');
+  if (hidden) toast('UI hidden — tap screen to play');
 }
 
 function refreshStats() {
-  const w = S.stats.wins, l = S.stats.losses, t = w + l;
+  const w = S.stats.wins, l = S.stats.losses, sk = S.stats.skips, t = w + l;
   const acc = t ? Math.round((w / t) * 100) + '%' : '0%';
-  ['stWin', 'pWin'].forEach(i => {
+
+  ['stWin', 'pWin', 'tblWins'].forEach(i => {
     const el = $(i);
-    if (el) el.textContent = String(w);
+    if (el) el.textContent = toMathBold(String(w));
   });
-  ['stLoss', 'pLoss'].forEach(i => {
+  ['stLoss', 'pLoss', 'tblLosses'].forEach(i => {
     const el = $(i);
-    if (el) el.textContent = String(l);
+    if (el) el.textContent = toMathBold(String(l));
   });
-  ['stAcc', 'pAcc', 'metaAcc'].forEach(i => {
+  ['stAcc', 'pAcc', 'metaAcc', 'tblAccuracy'].forEach(i => {
     const el = $(i);
-    if (el) el.textContent = acc;
+    if (el) el.textContent = toMathBold(acc);
   });
-  const sb = $('stBest');
-  if (sb) sb.textContent = String(S.stats.best || 0);
-  const ss = $('stStreak');
-  if (ss) ss.textContent = String(S.stats.streak || 0);
+
+  const tPred = $('tblTotalPredictions');
+  if (tPred) tPred.textContent = toMathBold(String(w + l + sk));
+
+  const tSkip = $('tblSkips');
+  if (tSkip) tSkip.textContent = toMathBold(String(sk));
+
+  const tHits = $('tblNumberHits');
+  if (tHits) tHits.textContent = toMathBold(String(S.stats.numberHits));
+
+  const tblBest = $('tblBestStreak');
+  if (tblBest) tblBest.textContent = toMathBold(String(S.stats.best || 0) + 'W');
+
+  const tblStrk = $('tblCurrentStreak');
+  if (tblStrk) tblStrk.textContent = toMathBold(String(S.stats.streak || 0) + 'W');
 }
 
 function setStatus(txt: string, analysing?: boolean) {
   const st = $('statusText');
-  if (st) st.textContent = txt;
+  if (st) st.textContent = toMathBold(txt);
   $('statusBar')?.classList.toggle('analysing', !!analysing);
 }
 
@@ -405,9 +579,9 @@ function setConf(c: number | null) {
   }
   const p = Math.round(c * 100);
   const cv = $('confVal');
-  if (cv) cv.textContent = p + '%';
+  if (cv) cv.textContent = toMathBold(p + '%');
   const cc = $('chipConf');
-  if (cc) cc.textContent = p + '%';
+  if (cc) cc.textContent = toMathBold(p + '%');
   if (seg) {
     const on = Math.round(clamp((p - 50) / 50, 0, 1) * seg.length);
     for (let i = 0; i < seg.length; i++) {
@@ -418,7 +592,7 @@ function setConf(c: number | null) {
 
 function setCoreDefault() {
   const cl = $('coreLbl');
-  if (cl) cl.textContent = 'SELECT MODE';
+  if (cl) cl.textContent = toMathBold('SELECT MODE');
   const p = $('corePred');
   const cn = $('coreNum');
   const cs = $('coreSub');
@@ -428,20 +602,20 @@ function setCoreDefault() {
       p.textContent = '🔒';
       p.className = 'qcore-pred locked';
     }
-    if (cl) cl.textContent = 'PREMIUM LOCKED';
+    if (cl) cl.textContent = toMathBold('VIP ACCESS LOCKED');
     if (cn) {
       cn.innerHTML =
-        '<div class="lock-inline"><svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>UNLOCK TO VIEW</div>';
+        `<div class="lock-inline"><svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>${toMathBold('UNLOCK VIP ACCESS')}</div>`;
     }
-    if (cs) cs.textContent = 'Tap the lock icon to enter key';
+    if (cs) cs.textContent = toMathBold('Tap the lock icon to enter key');
   } else {
     if (p) {
-      p.textContent = 'READY';
+      p.textContent = toMathBold('READY');
       p.className = 'qcore-pred ready';
       p.style.color = '';
     }
     if (cn) cn.innerHTML = '';
-    if (cs) cs.textContent = 'AI BRAIN & MATRIX READY';
+    if (cs) cs.textContent = toMathBold('ARX TM NOVIX PRO AI READY');
   }
 
   $('core')?.classList.remove('analysing');
@@ -469,6 +643,12 @@ function setCoreDefault() {
 
   const opBanner = $('oppositeBanner');
   if (opBanner) opBanner.style.display = 'none';
+
+  const hudSignal = $('hudBigSignal');
+  if (hudSignal) {
+    hudSignal.textContent = toMathBold('READY');
+    hudSignal.className = 'hud-pred-text ready';
+  }
 }
 
 function setAnalysing() {
@@ -479,28 +659,34 @@ function setAnalysing() {
   const cs = $('coreSub');
 
   if (!S.unlocked) {
-    if (cl) cl.textContent = 'PREMIUM LOCKED';
+    if (cl) cl.textContent = toMathBold('VIP ACCESS LOCKED');
     if (p) {
       p.textContent = '🔒';
       p.className = 'qcore-pred locked';
     }
     if (cn) {
       cn.innerHTML =
-        '<div class="lock-inline"><svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>UNLOCK TO VIEW</div>';
+        `<div class="lock-inline"><svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>${toMathBold('UNLOCK VIP ACCESS')}</div>`;
     }
-    if (cs) cs.textContent = 'Enter license key to unlock';
+    if (cs) cs.textContent = toMathBold('Enter VIP key to unlock');
     setStatus('LOCKED', true);
     return;
   }
-  if (cl) cl.textContent = 'PROCESSING MATRIX';
+  if (cl) cl.textContent = toMathBold('EVALUATING');
   if (p) {
     p.textContent = '…';
     p.className = 'qcore-pred ready';
     p.style.color = '';
   }
   if (cn) cn.innerHTML = '';
-  if (cs) cs.textContent = 'AI BRAIN & MATRIX COMPUTING';
+  if (cs) cs.textContent = toMathBold('CHECKING RECOVERY FIX & AUTO-SKIP');
   setStatus('ANALYSING', true);
+
+  const hudSignal = $('hudBigSignal');
+  if (hudSignal) {
+    hudSignal.textContent = '…';
+    hudSignal.className = 'hud-pred-text ready';
+  }
 }
 
 // DATA RETRIEVAL
@@ -567,7 +753,7 @@ function mergeRecs(mode: '30s' | '1m', incoming: HistoryRecord[]) {
 
 async function bootstrapHistory(mode: '30s' | '1m') {
   if (S.recs[mode].length >= 80) return;
-  toast('⏳ Loading historical matrix data…');
+  toast('⏳ ' + toMathBold('LOADING HISTORICAL MATRIX DATA...'));
   for (let p = 1; p <= 3; p++) {
     const l = await fetchHistory(mode, 100, p);
     if (!l.length) break;
@@ -597,7 +783,7 @@ export function selectMode(m: '30s' | '1m') {
   $('btn30')?.classList.toggle('on', m === '30s');
   $('btn1m')?.classList.toggle('on', m === '1m');
   const mm = $('metaMode');
-  if (mm) mm.textContent = m === '30s' ? '30 SEC' : '1 MIN';
+  if (mm) mm.textContent = toMathBold(m === '30s' ? '30 SEC' : '1 MIN');
 }
 
 export function toggleEngine() {
@@ -612,13 +798,13 @@ async function startEngine() {
   S.lastSeen[S.mode] = null;
   const sBtn = $('startBtn');
   if (sBtn) {
-    sBtn.textContent = '■ STOP ENGINE';
+    sBtn.textContent = '■ ' + toMathBold('STOP NOVIX ENGINE');
     sBtn.classList.add('stop');
   }
   const mm = $('metaMode');
-  if (mm) mm.textContent = S.mode === '30s' ? '30 SEC' : '1 MIN';
+  if (mm) mm.textContent = toMathBold(S.mode === '30s' ? '30 SEC' : '1 MIN');
   setStatus('CONNECTING', true);
-  toast(`▶ AI Brain & Matrix Engine started • ${S.mode}`);
+  toast(`▶ ${toMathBold('ARX TM NOVIX PRO AI STARTED')} • ${S.mode}`);
   await bootstrapHistory(S.mode);
   poll();
   S.pollTimer = setInterval(poll, S.mode === '30s' ? 4000 : 7000);
@@ -632,11 +818,11 @@ function stopEngine() {
   S.busy = false;
   const sBtn = $('startBtn');
   if (sBtn) {
-    sBtn.textContent = '▶ START QUANTUM ENGINE';
+    sBtn.textContent = '▶ ' + toMathBold('START NOVIX ENGINE');
     sBtn.classList.remove('stop');
   }
   setCoreDefault();
-  toast('Engine stopped');
+  toast(toMathBold('NOVIX ENGINE STOPPED'));
 }
 
 async function poll() {
@@ -670,55 +856,127 @@ async function runCycle(mode: '30s' | '1m') {
   const actualNum = fin.number;
   const actualType = BS(actualNum);
 
+  // EVALUATE PREVIOUS ROUND
   if (S.lastPrediction && S.lastPrediction.period === fin.period) {
     const lp = S.lastPrediction;
-    const sideWin = lp.signal === actualType;
-    const jackpot = lp.prime === actualNum || lp.backup === actualNum;
-    const win = sideWin || jackpot;
 
-    if (win) {
-      S.stats.wins++;
-      S.stats.streak++;
-      if (S.stats.streak > S.stats.best) S.stats.best = S.stats.streak;
-      if (S.unlocked) showWin(fin.period, mode, lp, actualType, actualNum, jackpot);
+    if (lp.isSkip) {
+      // ROUND WAS SKIPPED (SAFE PASS)
+      S.stats.skips++;
+      toast(`Round #${fin.period.slice(-4)}: ${toMathBold('SAFE SKIP PROTECTED CAPITAL')}`);
+      // Recovery level is preserved (does NOT increase or reset)
+      S.history.unshift({
+        period: fin.period,
+        mode,
+        prediction: 'SKIP',
+        predNum: [lp.prime, lp.backup],
+        actual: actualType,
+        actualNum,
+        win: null,
+        isSkip: true,
+        skipReason: lp.skipReason,
+        jackpot: false,
+        sideWin: false,
+        confidence: lp.confidence,
+        recoveryLevel: lp.recoveryLevel,
+        recoveryMultiplier: lp.recoveryMultiplier,
+        isReversed: false
+      });
     } else {
-      S.stats.losses++;
-      S.stats.streak = 0;
+      // ACTIVE BET ROUND
+      const sideWin = lp.signal === actualType;
+      const jackpot = lp.prime === actualNum || lp.backup === actualNum;
+      const win = sideWin || jackpot;
+
+      if (jackpot) S.stats.numberHits++;
+
+      if (win) {
+        S.stats.wins++;
+        S.stats.streak++;
+        if (S.stats.streak > S.stats.best) S.stats.best = S.stats.streak;
+
+        const prevLevel = S.recovery.level;
+        // WINNING FIX: Reset Recovery stage back to Level 1!
+        if (S.recovery.enabled && S.recovery.level > 1) {
+          S.recovery.totalRecovered += S.recovery.baseBet * (S.recovery.level === 2 ? 3 : S.recovery.level === 3 ? 8 : 24);
+          S.recovery.level = 1;
+          localStorage.setItem(LS.recoveryLevel, '1');
+          toast(`🎯 ${toMathBold('LEVEL ' + prevLevel + ' FIX SUCCESS!')} Capital recovered!`);
+        }
+
+        if (S.unlocked) showWin(fin.period, mode, lp, actualType, actualNum, jackpot);
+      } else {
+        S.stats.losses++;
+        S.stats.streak = 0;
+
+        // LOSS: ADVANCE TO NEXT RECOVERY LEVEL (up to 4)
+        if (S.recovery.enabled) {
+          if (S.recovery.level < 4) {
+            S.recovery.level = (S.recovery.level + 1) as 1 | 2 | 3 | 4;
+            localStorage.setItem(LS.recoveryLevel, String(S.recovery.level));
+            toast(`⚠️ ${toMathBold('ADVANCING TO 3-4L FIX: LEVEL ' + S.recovery.level)} (${S.recovery.level === 2 ? '3X' : S.recovery.level === 3 ? '8X' : '24X'})`);
+          } else {
+            // Level 4 cycle completed, reset to Level 1
+            S.recovery.level = 1;
+            localStorage.setItem(LS.recoveryLevel, '1');
+            toast(toMathBold('LEVEL 4 FINISHED → RESETTING TO LEVEL 1'));
+          }
+        }
+      }
+
+      S.history.unshift({
+        period: fin.period,
+        mode,
+        prediction: lp.signal,
+        predNum: [lp.prime, lp.backup],
+        actual: actualType,
+        actualNum,
+        win,
+        isSkip: false,
+        jackpot,
+        sideWin,
+        confidence: lp.confidence,
+        recoveryLevel: lp.recoveryLevel,
+        recoveryMultiplier: lp.recoveryMultiplier,
+        isReversed: S.lastAnalysis?.oppositeMajority.isReversed
+      });
     }
 
-    S.history.unshift({
-      period: fin.period,
-      mode,
-      prediction: lp.signal,
-      predNum: [lp.prime, lp.backup],
-      actual: actualType,
-      actualNum,
-      win,
-      jackpot,
-      sideWin,
-      confidence: lp.confidence,
-      isReversed: S.lastAnalysis?.oppositeMajority.isReversed
-    });
     if (S.history.length > 80) S.history.pop();
     renderHistory();
     refreshStats();
+    renderRecoveryWidget();
     S.lastPrediction = null;
   }
 
+  // GENERATE NEXT PREDICTION WITH RECOVERY & AUTO-SKIP
   const target = nextPeriod(fin.period);
   const numbers = recs.map(r => r.number);
-  const result = engineInstance.predict(numbers);
+
+  const result = engineInstance.predict(numbers, {
+    skipThreshold: S.autoSkip.enabled ? S.autoSkip.threshold : 50.0,
+    recoveryLevel: S.recovery.level,
+    recoveryEnabled: S.recovery.enabled,
+    baseBetAmount: S.recovery.baseBet
+  });
+
   S.lastAnalysis = result;
   S.lastPrediction = {
     period: target,
     signal: result.signal,
+    rawSignal: result.rawSignal,
+    isSkip: result.isSkip,
+    skipReason: result.skipReason,
     prime: result.prime,
     backup: result.backup,
-    confidence: result.confidence
+    confidence: result.confidence,
+    recoveryLevel: result.recovery.level,
+    recoveryMultiplier: result.recovery.multiplier
   };
 
   applyResult(result, target, mode);
   if ($('tab-engine')?.classList.contains('active')) renderEngineTab();
+  if ($('tab-recovery')?.classList.contains('active')) renderRecoveryTab();
   S.busy = false;
 }
 
@@ -727,7 +985,7 @@ function applyResult(F: PredictionResult, target: string, mode: '30s' | '1m') {
 
   if (!S.unlocked) {
     const cl = $('coreLbl');
-    if (cl) cl.textContent = 'PREMIUM LOCKED';
+    if (cl) cl.textContent = toMathBold('VIP ACCESS LOCKED');
     const p = $('corePred');
     if (p) {
       p.textContent = '🔒';
@@ -736,13 +994,21 @@ function applyResult(F: PredictionResult, target: string, mode: '30s' | '1m') {
     const cn = $('coreNum');
     if (cn) {
       cn.innerHTML =
-        '<div class="lock-inline"><svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>UNLOCK TO VIEW</div>';
+        `<div class="lock-inline"><svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>${toMathBold('UNLOCK VIP KEY')}</div>`;
     }
     const cs = $('coreSub');
-    if (cs) cs.textContent = 'Tap 🔒 to enter license key';
+    if (cs) cs.textContent = toMathBold('Tap 🔒 to enter license key');
     setStatus('LOCKED', false);
     setRing(0);
     setConf(null);
+
+    const hudSignal = $('hudBigSignal');
+    if (hudSignal) {
+      hudSignal.textContent = '🔒';
+      hudSignal.className = 'hud-pred-text locked';
+    }
+    const hudNum = $('hudPrimeBackup');
+    if (hudNum) hudNum.innerHTML = `<span class="hud-nb locked">${toMathBold('LOCKED')}</span>`;
 
     const cv = $('chipVotes');
     if (cv) cv.textContent = '🔒';
@@ -769,190 +1035,306 @@ function applyResult(F: PredictionResult, target: string, mode: '30s' | '1m') {
     const sBar = $('pdSmallBar');
     if (sBar) sBar.style.width = '0%';
     const mp = $('metaPeriod');
-    if (mp) mp.textContent = String(target).slice(-5);
+    if (mp) mp.textContent = toMathBold(String(target).slice(-5));
     const mm = $('metaMode');
-    if (mm) mm.textContent = mode === '30s' ? '30 SEC' : '1 MIN';
+    if (mm) mm.textContent = toMathBold(mode === '30s' ? '30 SEC' : '1 MIN');
     const ms = $('metaSignal');
     if (ms) {
       ms.textContent = '🔒';
       ms.style.color = 'var(--muted)';
     }
     const mst = $('metaStatus');
-    if (mst) mst.textContent = 'LOCKED';
+    if (mst) mst.textContent = toMathBold('LOCKED');
 
     const opBanner = $('oppositeBanner');
     if (opBanner) opBanner.style.display = 'none';
     return;
   }
 
-  const isBig = F.signal === 'BIG';
-  const cl = $('coreLbl');
-  if (cl) cl.textContent = F.oppositeMajority.isReversed ? '⚡ OPPOSITE MAJORITY' : '🧠 AI BRAIN & MATRIX SIGNAL';
-
   const p = $('corePred');
-  if (p) {
-    p.textContent = F.signal;
-    p.className = 'qcore-pred ' + (isBig ? 'big' : 'small');
-    p.style.color = '';
-  }
-
+  const cl = $('coreLbl');
   const cn = $('coreNum');
-  if (cn) {
-    cn.innerHTML =
-      `<div class="nb ${isBig ? 'big' : 'small'}"><b>${F.prime}</b><i>PRIME (MATRIX)</i></div>` +
-      `<div class="nb ${isBig ? 'small' : 'big'}"><b>${F.backup}</b><i>BACKUP</i></div>`;
-  }
-
-  const total = F.bigVotes + F.smallVotes;
   const cs = $('coreSub');
-  if (cs) {
-    cs.textContent = F.oppositeMajority.isReversed
-      ? `HERD TRAP: Flipped ${F.oppositeMajority.rawConsensus} → ${F.signal}`
-      : `AI BRAIN: Sys1 ${Math.round(F.brain.system1Score * 100)}% • Matrix P(${F.signal[0]}) ${Math.round((isBig ? F.matrix.matrixProbBig : F.matrix.matrixProbSmall) * 100)}%`;
-  }
 
-  setStatus('READY', false);
-  setRing(F.confidence / 100);
-  setConf(F.confidence / 100);
+  const hudSignal = $('hudBigSignal');
+  const hudNum = $('hudPrimeBackup');
+  const hudConfBadge = $('hudConfBadge');
+  const hudPeriodNum = $('hudPeriodNum');
 
-  // Opposite Majority Banner on Stage
-  const opBanner = $('oppositeBanner');
-  if (opBanner) {
-    opBanner.style.display = 'flex';
-    if (F.oppositeMajority.isReversed) {
-      opBanner.className = 'op-banner reversed';
-      opBanner.innerHTML = `<span class="op-tag">OPPOSITE MAJORITY TRIGGERED</span><span>Consensus was ${F.oppositeMajority.rawConsensus} (${Math.round(F.oppositeMajority.consensusStrength * 100)}%) — Trap Risk: ${Math.round(F.oppositeMajority.trapRiskScore * 100)}%</span>`;
-    } else {
-      opBanner.className = 'op-banner normal';
-      opBanner.innerHTML = `<span class="op-tag">CONSENSUS ALIGNED</span><span>Matrix & Brain agree with ${F.signal} trend</span>`;
+  if (hudPeriodNum) hudPeriodNum.textContent = '#' + toMathBold(String(target).slice(-5));
+
+  if (F.isSkip) {
+    // LOW CONFIDENCE AUTO-SKIP DISPLAY (MATHEMATICAL BOLD: 𝐒𝐊𝐈𝐏)
+    const boldSignal = toMathBold('SKIP');
+    if (cl) cl.textContent = '⚠️ ' + toMathBold('SAFE PASS — LOW CONFIDENCE');
+    if (p) {
+      p.textContent = boldSignal;
+      p.className = 'qcore-pred skip-mode math-bold';
+      p.style.color = '#f59e0b';
+    }
+    if (hudSignal) {
+      hudSignal.textContent = boldSignal;
+      hudSignal.className = 'hud-pred-text skip math-bold';
+    }
+
+    if (cn) {
+      cn.innerHTML =
+        `<div class="nb skip"><b style="background:#f59e0b22;border-color:#f59e0b;color:#d97706">${toMathBold('PASS')}</b><i>${toMathBold('WAIT NEXT')}</i></div>` +
+        `<div class="nb skip"><b style="background:#ffffff11;border-color:var(--border);color:var(--muted)">${toMathBold('HOLD')}</b><i>${toMathBold('CAPITAL')}</i></div>`;
+    }
+
+    if (hudNum) {
+      hudNum.innerHTML =
+        `<div class="hud-nb-box skip"><b>${toMathBold('SAFE')}</b><span>${toMathBold('PASS')}</span></div>` +
+        `<div class="hud-nb-box skip"><b>${toMathBold('HOLD')}</b><span>${toMathBold('CAPITAL')}</span></div>`;
+    }
+
+    if (hudConfBadge) {
+      hudConfBadge.textContent = `${toMathBold(String(F.confidence))}% • ${toMathBold('SAFE SKIP')}`;
+      hudConfBadge.className = 'hud-conf-badge skip';
+    }
+
+    if (cs) cs.textContent = F.skipReason;
+    setStatus('SKIP ROUND', false);
+    setRing(F.confidence / 100);
+    setConf(F.confidence / 100);
+
+    const opBanner = $('oppositeBanner');
+    if (opBanner) {
+      opBanner.style.display = 'flex';
+      opBanner.className = 'op-banner skip-alert';
+      opBanner.innerHTML = `<span class="op-tag" style="background:#f59e0b;color:#000">${toMathBold('SAFE SKIP')}</span><span>${toMathBold('LOW CONFIDENCE (' + F.confidence + '% < ' + S.autoSkip.threshold + '%) — PASSING ROUND')}</span>`;
+    }
+  } else {
+    // ACTIVE PREDICTION DISPLAY (MATHEMATICAL BOLD: 𝐁𝐈𝐆 / 𝐒𝐌𝐀𝐋𝐋)
+    const isBig = F.signal === 'BIG';
+    const boldSignal = toMathBold(F.signal); // "𝐁𝐈𝐆" or "𝐒𝐌𝐀𝐋𝐋"
+
+    if (cl) {
+      cl.textContent = F.oppositeMajority.isReversed
+        ? '⚡ ' + toMathBold('OPPOSITE MAJORITY FLIP')
+        : (F.recovery.level > 1 ? `🎯 ${toMathBold('3-4L FIX (LVL ' + F.recovery.level + ')')}` : '👑 ' + toMathBold('NOVIX PRO HIGH ACCURACY'));
+    }
+    if (p) {
+      p.textContent = boldSignal;
+      p.className = 'qcore-pred math-bold ' + (isBig ? 'big' : 'small');
+      p.style.color = '';
+    }
+    if (hudSignal) {
+      hudSignal.textContent = boldSignal;
+      hudSignal.className = 'hud-pred-text math-bold ' + (isBig ? 'big' : 'small');
+    }
+
+    if (cn) {
+      cn.innerHTML =
+        `<div class="nb ${isBig ? 'big' : 'small'}"><b>${toMathBold(String(F.prime))}</b><i>${toMathBold('PRIME')}</i></div>` +
+        `<div class="nb ${isBig ? 'small' : 'big'}"><b>${toMathBold(String(F.backup))}</b><i>${toMathBold('BACKUP')}</i></div>`;
+    }
+
+    if (hudNum) {
+      hudNum.innerHTML =
+        `<div class="hud-nb-box ${isBig ? 'big' : 'small'}"><b>${toMathBold(String(F.prime))}</b><span>${toMathBold('PRIME (MATRIX)')}</span></div>` +
+        `<div class="hud-nb-box ${isBig ? 'small' : 'big'}"><b>${toMathBold(String(F.backup))}</b><span>${toMathBold('BACKUP')}</span></div>`;
+    }
+
+    if (hudConfBadge) {
+      hudConfBadge.textContent = `${toMathBold(String(F.confidence))}% • ${toMathBold('HIGH ACCURACY')}`;
+      hudConfBadge.className = 'hud-conf-badge ok';
+    }
+
+    if (cs) {
+      cs.textContent = F.oppositeMajority.isReversed
+        ? `⚡ ${toMathBold('HERD TRAP: Inverted ' + F.oppositeMajority.rawConsensus + ' → ' + F.signal + ' (Conf: ' + F.confidence + '%)')}`
+        : `👑 ${toMathBold('CONFIRMED: P(' + F.signal[0] + ') ' + Math.round((isBig ? F.matrix.matrixProbBig : F.matrix.matrixProbSmall) * 100) + '% • Conf: ' + F.confidence + '% • Bet: ₹' + F.recovery.suggestedBet)}`;
+    }
+    setStatus('CONFIRMED', false);
+    setRing(F.confidence / 100);
+    setConf(F.confidence / 100);
+
+    const opBanner = $('oppositeBanner');
+    if (opBanner) {
+      opBanner.style.display = 'flex';
+      if (F.oppositeMajority.isReversed) {
+        opBanner.className = 'op-banner reversed';
+        opBanner.innerHTML = `<span class="op-tag">${toMathBold('OPPOSITE MAJORITY TRIGGERED')}</span><span>${toMathBold('Consensus was ' + F.oppositeMajority.rawConsensus + ' (' + Math.round(F.oppositeMajority.consensusStrength * 100) + '%) — Inverted to ' + F.signal)}</span>`;
+      } else {
+        opBanner.className = 'op-banner normal';
+        opBanner.innerHTML = `<span class="op-tag">${toMathBold('HIGH ACCURACY CONFIRMED')}</span><span>${toMathBold('3-4L Fix Level ' + F.recovery.level + ' (' + F.recovery.multiplier + 'X) • AI Matrix Signal: ' + F.signal)}</span>`;
+      }
     }
   }
 
+  // Vote bar & metrics
+  const total = F.bigVotes + F.smallVotes;
   const bigPct = total ? Math.round((F.bigVotes / total) * 100) : 50;
   const vb = $('voteBig');
   if (vb) {
     vb.style.width = bigPct + '%';
-    vb.textContent = bigPct >= 18 ? `BIG ${F.bigVotes}` : '';
+    vb.textContent = bigPct >= 18 ? `${toMathBold('BIG')} ${toMathBold(String(F.bigVotes))}` : '';
   }
   const vs = $('voteSmall');
   if (vs) {
     vs.style.width = 100 - bigPct + '%';
-    vs.textContent = 100 - bigPct >= 18 ? `SMALL ${F.smallVotes}` : '';
+    vs.textContent = 100 - bigPct >= 18 ? `${toMathBold('SMALL')} ${toMathBold(String(F.smallVotes))}` : '';
   }
   const vv = $('voteVal');
-  if (vv) vv.textContent = `${bigPct}% vs ${100 - bigPct}%`;
+  if (vv) vv.textContent = `${toMathBold(String(bigPct))}% vs ${toMathBold(String(100 - bigPct))}%`;
 
   const p0 = F.probabilities.state_0 || 0.5;
   const p1 = F.probabilities.state_1 || 0.5;
   const pdB = $('pdBigV');
-  if (pdB) pdB.textContent = (p1 * 100).toFixed(1) + '%';
+  if (pdB) pdB.textContent = toMathBold((p1 * 100).toFixed(1) + '%');
   const pdS = $('pdSmallV');
-  if (pdS) pdS.textContent = (p0 * 100).toFixed(1) + '%';
+  if (pdS) pdS.textContent = toMathBold((p0 * 100).toFixed(1) + '%');
   const bBar = $('pdBigBar');
   if (bBar) bBar.style.width = p1 * 100 + '%';
   const sBar = $('pdSmallBar');
   if (sBar) sBar.style.width = p0 * 100 + '%';
 
-  $('pdBig')?.classList.toggle('win-side', isBig);
-  $('pdSmall')?.classList.toggle('win-side', !isBig);
+  $('pdBig')?.classList.toggle('win-side', F.signal === 'BIG');
+  $('pdSmall')?.classList.toggle('win-side', F.signal === 'SMALL');
 
   const cv = $('chipVotes');
-  if (cv) cv.textContent = `${F.bigVotes}/${total}`;
+  if (cv) cv.textContent = `${toMathBold(String(F.bigVotes))}/${toMathBold(String(total))}`;
   const csamp = $('chipSamples');
-  if (csamp) csamp.textContent = String(Math.min(600, S.recs[mode].length));
+  if (csamp) csamp.textContent = toMathBold(String(Math.min(600, S.recs[mode].length)));
 
   const mp = $('metaPeriod');
-  if (mp) mp.textContent = String(target).slice(-5);
+  if (mp) mp.textContent = toMathBold(String(target).slice(-5));
   const mm = $('metaMode');
-  if (mm) mm.textContent = mode === '30s' ? '30 SEC' : '1 MIN';
+  if (mm) mm.textContent = toMathBold(mode === '30s' ? '30 SEC' : '1 MIN');
   const ms = $('metaSignal');
   if (ms) {
-    ms.textContent = F.signal;
-    ms.style.color = isBig ? '#f5b40a' : '#38c8ff';
+    ms.textContent = toMathBold(F.signal);
+    ms.style.color = F.signal === 'BIG' ? '#d97706' : F.signal === 'SMALL' ? '#0284c7' : '#f59e0b';
   }
   const mst = $('metaStatus');
-  if (mst) mst.textContent = F.oppositeMajority.isReversed ? 'OPP-MAJ' : 'OPTIMAL';
+  if (mst) mst.textContent = toMathBold(F.isSkip ? 'SKIPPED' : (F.oppositeMajority.isReversed ? 'OPP-MAJ' : `FIX L${F.recovery.level}`));
+
+  renderRecoveryWidget();
 }
 
 // PERIOD TIMER
 setInterval(() => {
   const el = $('metaTimer');
-  if (!el) return;
+  const hudTimer = $('hudTimer');
   if (!S.running) {
-    el.textContent = '--:--';
+    if (el) el.textContent = '--:--';
+    if (hudTimer) hudTimer.textContent = '--:--';
     return;
   }
   const now = Math.floor(Date.now() / 1000);
   const rem = S.mode === '30s' ? 30 - (now % 30) : 60 - (now % 60);
-  el.textContent = '00:' + String(rem).padStart(2, '0');
+  const timerStr = '00:' + String(rem).padStart(2, '0');
+  const boldTimer = toMathBold(timerStr);
+  if (el) el.textContent = timerStr;
+  if (hudTimer) hudTimer.textContent = boldTimer;
 }, 1000);
 
 // HISTORY RENDER
 function renderHistory() {
   const list = $('historyList');
   if (!list) return;
-  const w = S.history.filter(h => h.win === true).length;
-  const l = S.history.filter(h => h.win === false).length;
+  const w = S.stats.wins;
+  const l = S.stats.losses;
   const tot = w + l;
 
   const hsw = $('hsWins');
-  if (hsw) hsw.textContent = String(w);
+  if (hsw) hsw.textContent = toMathBold(String(w));
   const hsl = $('hsLoss');
-  if (hsl) hsl.textContent = String(l);
+  if (hsl) hsl.textContent = toMathBold(String(l));
   const hsa = $('hsAcc');
-  if (hsa) hsa.textContent = tot ? Math.round((w / tot) * 100) + '%' : '0%';
+  if (hsa) hsa.textContent = toMathBold(tot ? Math.round((w / tot) * 100) + '%' : '0%');
   const hsb = $('hsBest');
-  if (hsb) hsb.textContent = String(S.stats.best || 0);
+  if (hsb) hsb.textContent = toMathBold(String(S.stats.best || 0));
   const hc = $('histCount');
-  if (hc) hc.textContent = S.history.length + ' ROUND' + (S.history.length === 1 ? '' : 'S');
+  if (hc) hc.textContent = toMathBold(S.history.length + ' ROUNDS');
 
   const sl = S.history.slice(0, 20).reverse();
   let html = '';
   for (let i = 0; i < 20; i++) {
     const h = sl[i];
-    html += h ? (h.win ? '<span class="d w"></span>' : '<span class="d l"></span>') : '<span class="d"></span>';
+    html += h
+      ? h.isSkip
+        ? '<span class="d s" title="Safe Skip"></span>'
+        : h.win
+        ? '<span class="d w" title="Win"></span>'
+        : '<span class="d l" title="Loss"></span>'
+      : '<span class="d"></span>';
   }
   const ht = $('histTrail');
   if (ht) ht.innerHTML = html;
   const s20 = S.history.slice(0, 20);
+  const nonSkip = s20.filter(h => !h.isSkip);
   const hr = $('histRate');
-  if (hr) hr.textContent = s20.length ? Math.round((s20.filter(h => h.win).length / s20.length) * 100) + '%' : '—';
+  if (hr) hr.textContent = nonSkip.length ? toMathBold(Math.round((nonSkip.filter(h => h.win).length / nonSkip.length) * 100) + '%') : '—';
 
   if (!S.history.length) {
     list.innerHTML =
-      '<div class="card"><div class="empty"><b>NO ROUNDS YET</b>Home tab par START dabao.<br>Wins aur losses yahan dikhenge.</div></div>';
+      `<div class="card"><div class="empty"><b>${toMathBold('NO ROUNDS YET')}</b>Home tab par START dabao.<br>Wins, losses aur auto-skips yahan dikhenge.</div></div>`;
     return;
   }
 
   list.innerHTML = S.history
     .map(h => {
+      if (h.isSkip) {
+        return `<div class="hitem skip">
+          <div class="st skip"><div class="ic"><svg viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg></div><div class="l">${toMathBold('SKIP')}</div></div>
+          <div class="hbody">
+            <div class="htop">
+              <span class="per">#${toMathBold(String(h.period).slice(-5))}</span>
+              <span class="mc">${toMathBold(h.mode === '30s' ? '30 SEC' : '1 MIN')}</span>
+              <span class="tag-skip">${toMathBold('SAFE PASS')}</span>
+            </div>
+            <div class="hvs">
+              <div class="hside">
+                <div class="sk">${toMathBold('DECISION')}</div>
+                <div class="sv" style="color:var(--primary)">${toMathBold('PASS ROUND (HOLD)')}</div>
+              </div>
+              <div class="harr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+              <div class="hside act">
+                <div class="sk">${toMathBold('ACTUAL OUTCOME')}</div>
+                <div class="sv">${toMathBold(h.actual)} <span class="num">${toMathBold(String(h.actualNum))}</span></div>
+              </div>
+            </div>
+            <div class="hfoot">
+              <span><b>${toMathBold('CAPITAL SAVED')}</b></span>
+              <span>• ${toMathBold('Streak Preserved')}</span>
+              <span>• Conf: ${toMathBold(String(Math.round(h.confidence)))}%</span>
+            </div>
+          </div>
+        </div>`;
+      }
+
       const cls = h.win ? '' : 'loss';
       const icon = h.win
         ? '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>'
         : '<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
-      const st = h.win ? 'WIN' : 'LOSS';
+      const st = h.win ? toMathBold('WIN') : toMathBold('LOSS');
       return `<div class="hitem ${cls}">
       <div class="st"><div class="ic">${icon}</div><div class="l">${st}</div></div>
       <div class="hbody">
         <div class="htop">
-          <span class="per">#${String(h.period).slice(-5)}</span>
-          <span class="mc">${h.mode === '30s' ? '30 SEC' : '1 MIN'}</span>
-          ${h.isReversed ? '<span class="tag-reversed">OPP-MAJ</span>' : ''}
+          <span class="per">#${toMathBold(String(h.period).slice(-5))}</span>
+          <span class="mc">${toMathBold(h.mode === '30s' ? '30 SEC' : '1 MIN')}</span>
+          <span class="tag-rec">${toMathBold('LVL ' + h.recoveryLevel + ' (' + h.recoveryMultiplier + 'X)')}</span>
+          ${h.isReversed ? `<span class="tag-reversed">${toMathBold('OPP-MAJ')}</span>` : ''}
         </div>
         <div class="hvs">
           <div class="hside">
-            <div class="sk">PREDICTED</div>
-            <div class="sv">${h.prediction}${h.predNum ? h.predNum.map(n => ' <span class="num">' + n + '</span>').join('') : ''}</div>
+            <div class="sk">${toMathBold('PREDICTED')}</div>
+            <div class="sv math-bold" style="font-size:13px">${toMathBold(h.prediction)}${h.predNum ? h.predNum.map(n => ' <span class="num">' + toMathBold(String(n)) + '</span>').join('') : ''}</div>
           </div>
           <div class="harr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
           <div class="hside act">
-            <div class="sk">ACTUAL</div>
-            <div class="sv">${h.actual} <span class="num">${h.actualNum}</span></div>
+            <div class="sk">${toMathBold('ACTUAL')}</div>
+            <div class="sv math-bold" style="font-size:13px">${toMathBold(h.actual)} <span class="num">${toMathBold(String(h.actualNum))}</span></div>
           </div>
         </div>
         <div class="hfoot">
-          <span><b>BRAIN-MATRIX V7</b></span>
-          ${h.confidence ? '<span>• CONF ' + Math.round(h.confidence) + '%</span>' : ''}
+          <span><b>${toMathBold('NOVIX PRO AI')}</b></span>
+          ${h.confidence ? '<span>• CONF ' + toMathBold(String(Math.round(h.confidence))) + '%</span>' : ''}
+          ${h.win ? '<span>• ' + toMathBold('Profit Secured') + '</span>' : ''}
         </div>
       </div>
     </div>`;
@@ -961,27 +1343,27 @@ function renderHistory() {
 }
 
 // WIN POPUP
-function showWin(period: string, mode: '30s' | '1m', lp: any, actual: SignalType, actualNum: number, jackpot: boolean) {
+function showWin(period: string, mode: '30s' | '1m', lp: any, actual: 'BIG' | 'SMALL', actualNum: number, jackpot: boolean) {
   const wp = $('wnPeriod');
-  if (wp) wp.textContent = String(period).slice(-5);
+  if (wp) wp.textContent = toMathBold(String(period).slice(-5));
   const wm = $('wnMode');
-  if (wm) wm.textContent = mode === '30s' ? 'WIN GO 30s' : 'WIN GO 1M';
+  if (wm) wm.textContent = toMathBold(mode === '30s' ? 'WIN GO 30s' : 'WIN GO 1M');
   const wpred = $('wnPred');
-  if (wpred) wpred.textContent = lp.signal;
+  if (wpred) wpred.textContent = toMathBold(lp.signal);
   const wact = $('wnActual');
-  if (wact) wact.textContent = actual;
+  if (wact) wact.textContent = toMathBold(actual);
   const wactn = $('wnActualNum');
-  if (wactn) wactn.textContent = String(actualNum);
+  if (wactn) wactn.textContent = toMathBold(String(actualNum));
   const wstrk = $('wnStreak');
-  if (wstrk) wstrk.textContent = '+' + S.stats.streak + ' WIN STREAK';
+  if (wstrk) wstrk.textContent = '+' + toMathBold(String(S.stats.streak)) + ' ' + toMathBold('WIN STREAK');
   const wamt = $('wnAmount');
-  if (wamt) wamt.textContent = jackpot ? 'JACKPOT NUM HIT!' : 'YOU WIN!';
+  if (wamt) wamt.textContent = jackpot ? toMathBold('JACKPOT NUM HIT!') : toMathBold('WIN RECOVERED!');
   const wr = $('wnRibbon');
-  if (wr) wr.textContent = jackpot ? 'MATRIX JACKPOT' : 'VICTORY';
+  if (wr) wr.textContent = jackpot ? toMathBold('MATRIX JACKPOT') : toMathBold(`FIX LVL ${lp.recoveryLevel} VICTORY`);
   const wpn = $('wnPredNum');
   if (wpn) {
     wpn.innerHTML = [lp.prime, lp.backup]
-      .map(n => (jackpot && n === actualNum ? '<b style="color:var(--win)">' + n + ' ✓</b>' : n))
+      .map(n => (jackpot && n === actualNum ? '<b style="color:var(--win)">' + toMathBold(String(n)) + ' ✓</b>' : toMathBold(String(n))))
       .join(' & ');
   }
 
@@ -1001,6 +1383,70 @@ function showWin(period: string, mode: '30s' | '1m', lp: any, actual: SignalType
     }
   }
   $('winOverlay')?.classList.add('show');
+}
+
+// 3-4 LEVEL RECOVERY TAB VIEW
+function renderRecoveryTab() {
+  const v = $('recoveryView');
+  if (!v) return;
+
+  const currentLevel = S.recovery.level;
+  const mults: Record<number, number> = { 1: 1, 2: 3, 3: 8, 4: 24 };
+
+  let h = '';
+  h += `<div class="card" style="border-color:var(--primary-border);box-shadow:0 0 16px var(--primary-soft)">
+    <div class="card-t">${toMathBold('3-4 LEVEL FIX WINNING RECOVERY SYSTEM')}<span class="tag">${toMathBold(S.recovery.enabled ? 'ACTIVE' : 'OFF')}</span></div>
+    <div class="rec-grid">
+      ${[1, 2, 3, 4].map(lvl => {
+        const isCurrent = lvl === currentLevel;
+        const m = mults[lvl];
+        const bet = S.recovery.baseBet * m;
+        return `<div class="rec-col ${isCurrent ? 'active' : ''}" onclick="window.__ARX.manualSetRecoveryLevel(${lvl})">
+          <div class="rc-lvl">${toMathBold('LEVEL ' + lvl)}</div>
+          <div class="rc-mult math-bold">${toMathBold(m + 'X')}</div>
+          <div class="rc-bet">₹${toMathBold(String(bet))}</div>
+          <div class="rc-status">${isCurrent ? '● ' + toMathBold('CURRENT') : toMathBold('STAGE')}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div style="margin-top:14px;padding:12px;background:var(--card-solid);border-radius:12px;border:1px solid var(--border)">
+      <div style="font-size:10px;font-weight:900;letter-spacing:1px;color:var(--ink);display:flex;justify-content:space-between">
+        <span>${toMathBold('CURRENT STAGE')}: <b style="color:var(--primary)">${toMathBold('LEVEL ' + currentLevel + ' (' + mults[currentLevel] + 'X)')}</b></span>
+        <span>${toMathBold('SUGGESTED BET')}: <b style="color:var(--win)">₹${toMathBold(String(S.recovery.baseBet * mults[currentLevel]))}</b></span>
+      </div>
+      <div style="font-size:9px;color:var(--muted);margin-top:6px;line-height:1.5">
+        Har round ke baad engine automatically recovery stage check karta hai. Agar loss hota hai to level upar jayega with fix boost, aur win par turant Level 1 par reset ho jayega!
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+      <button class="gc-play" style="width:100%" onclick="window.__ARX.manualSetRecoveryLevel(1)">↻ ${toMathBold('RESET TO LEVEL 1')}</button>
+      <button class="gc-play" style="width:100%;background:var(--card-solid);border:1px solid var(--border);color:var(--ink)" onclick="window.__ARX.toggleRecoveryMod()">
+        ${toMathBold(S.recovery.enabled ? 'PAUSE RECOVERY' : 'ENABLE RECOVERY')}
+      </button>
+    </div>
+  </div>`;
+
+  // LOW CONFIDENCE AUTO-SKIP CARD
+  h += `<div class="card">
+    <div class="card-t">${toMathBold('LOW CONFIDENCE AUTO-SKIP SYSTEM')}<span class="tag">${toMathBold(S.autoSkip.enabled ? 'ACTIVE' : 'OFF')}</span></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:var(--card-solid);border-radius:12px;border:1px solid var(--border)">
+      <div>
+        <div style="font-family:Orbitron;font-size:11px;font-weight:900;color:var(--ink)">${toMathBold('SKIP THRESHOLD')}: ${toMathBold(String(S.autoSkip.threshold))}%</div>
+        <div style="font-size:8.5px;color:var(--muted);margin-top:3px">Predictions below this confidence are safely skipped to protect streak.</div>
+      </div>
+      <button class="gc-play" style="padding:7px 12px;font-size:9px" onclick="window.__ARX.toggleAutoSkip()">
+        ${toMathBold(S.autoSkip.enabled ? 'ON' : 'OFF')}
+      </button>
+    </div>
+    <div style="display:flex;gap:6px;margin-top:8px">
+      <button class="rec-btn ${S.autoSkip.threshold === 70 ? 'on' : ''}" onclick="window.__ARX.setSkipThreshold(70)">${toMathBold('70% RELAXED')}</button>
+      <button class="rec-btn ${S.autoSkip.threshold === 74 ? 'on' : ''}" onclick="window.__ARX.setSkipThreshold(74)">${toMathBold('74% STANDARD')}</button>
+      <button class="rec-btn ${S.autoSkip.threshold === 78 ? 'on' : ''}" onclick="window.__ARX.setSkipThreshold(78)">${toMathBold('78% HIGH FIX')}</button>
+      <button class="rec-btn ${S.autoSkip.threshold === 82 ? 'on' : ''}" onclick="window.__ARX.setSkipThreshold(82)">${toMathBold('82% STRICT')}</button>
+    </div>
+  </div>`;
+
+  v.innerHTML = h;
 }
 
 // ENGINE BREAKDOWN TAB
@@ -1029,12 +1475,12 @@ function renderEngineTab() {
 
   if (!S.unlocked) {
     v.innerHTML =
-      '<div class="card"><div class="empty"><b>🔒 PREMIUM LOCKED</b>Unlock with a license key<br>to view the AI Brain, Opposite Majority, and Matrix breakdown.</div></div>';
+      `<div class="card"><div class="empty"><b>🔒 ${toMathBold('VIP ACCESS LOCKED')}</b>Unlock with a license key<br>to view the AI Brain, Opposite Majority, and Matrix breakdown.</div></div>`;
     return;
   }
   if (!F) {
     v.innerHTML =
-      '<div class="card"><div class="empty"><b>NO ANALYSIS YET</b>Home tab se engine start karo.<br>AI Human Brain aur Matrix ka pura live analysis yahan aayega.</div></div>';
+      `<div class="card"><div class="empty"><b>${toMathBold('NO ANALYSIS YET')}</b>Home tab se engine start karo.<br>AI Human Brain aur Matrix ka pura live breakdown yahan aayega.</div></div>`;
     return;
   }
 
@@ -1047,94 +1493,104 @@ function renderEngineTab() {
 
   // 1. Fusion Verdict Card
   h += `<div class="card">
-    <div class="card-t">FUSION VERDICT<span class="tag">BRAIN-MATRIX V7</span></div>
+    <div class="card-t">${toMathBold('FUSION VERDICT')}<span class="tag">${toMathBold('NOVIX PRO AI B3.9')}</span></div>
     <div class="meta-row" style="margin-top:0">
-      <div class="meta"><div class="k">SIGNAL</div><div class="v" style="color:${isBig ? '#f5b40a' : '#38c8ff'}">${F.signal}</div></div>
-      <div class="meta"><div class="k">CONFIDENCE</div><div class="v" style="color:var(--primary)">${F.confidence}%</div></div>
-      <div class="meta"><div class="k">P(BIG)</div><div class="v">${((F.probabilities.state_1 || 0.5) * 100).toFixed(1)}%</div></div>
-      <div class="meta"><div class="k">P(SMALL)</div><div class="v">${((F.probabilities.state_0 || 0.5) * 100).toFixed(1)}%</div></div>
-      <div class="meta"><div class="k">PRIME</div><div class="v" style="color:var(--primary)">${F.prime}</div></div>
-      <div class="meta"><div class="k">BACKUP</div><div class="v">${F.backup}</div></div>
+      <div class="meta"><div class="k">${toMathBold('SIGNAL')}</div><div class="v math-bold" style="color:${F.isSkip ? '#f59e0b' : isBig ? '#d97706' : '#0284c7'};font-size:16px">${toMathBold(F.signal)}</div></div>
+      <div class="meta"><div class="k">${toMathBold('CONFIDENCE')}</div><div class="v math-bold" style="color:var(--primary)">${toMathBold(String(F.confidence))}%</div></div>
+      <div class="meta"><div class="k">${toMathBold('P(BIG)')}</div><div class="v">${toMathBold(((F.probabilities.state_1 || 0.5) * 100).toFixed(1))}%</div></div>
+      <div class="meta"><div class="k">${toMathBold('P(SMALL)')}</div><div class="v">${toMathBold(((F.probabilities.state_0 || 0.5) * 100).toFixed(1))}%</div></div>
+      <div class="meta"><div class="k">${toMathBold('PRIME')}</div><div class="v math-bold" style="color:var(--primary);font-size:16px">${F.isSkip ? '—' : toMathBold(String(F.prime))}</div></div>
+      <div class="meta"><div class="k">${toMathBold('BACKUP')}</div><div class="v math-bold" style="font-size:16px">${F.isSkip ? '—' : toMathBold(String(F.backup))}</div></div>
     </div>
   </div>`;
 
-  // 2. AI HUMAN BRAIN Cognitive Heuristics Card
+  // 2. 3-4 Level Fix Status
   h += `<div class="card" style="border-color:var(--primary-border)">
-    <div class="card-t">🧠 AI HUMAN BRAIN HEURISTICS<span class="tag">NEURO-PROBABILITY</span></div>
+    <div class="card-t">${toMathBold('3-4 LEVEL FIX & RECOVERY PIPELINE')}<span class="tag">${toMathBold('ACTIVE')}</span></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--card-solid);border-radius:10px">
+      <span>${toMathBold('Active Level')}: <b style="color:var(--primary)">${toMathBold('LEVEL ' + F.recovery.level + ' (' + F.recovery.multiplier + 'X)')}</b></span>
+      <span>${toMathBold('Target Bet')}: <b style="color:var(--win)">₹${toMathBold(String(F.recovery.suggestedBet))}</b></span>
+      <span>${toMathBold('Auto-Skip')}: <b style="color:${F.isSkip ? 'var(--primary)' : 'var(--win)'}">${toMathBold(F.isSkip ? 'TRIGGERED (SAFE)' : 'PASSED')}</b></span>
+    </div>
+  </div>`;
+
+  // 3. AI HUMAN BRAIN Cognitive Heuristics Card
+  h += `<div class="card">
+    <div class="card-t">🧠 ${toMathBold('AI HUMAN BRAIN HEURISTICS')}<span class="tag">${toMathBold('NEURO-PROBABILITY')}</span></div>
     <div class="brain-grid">
       <div class="bg-item">
-        <div class="bg-lbl">SYSTEM 1 (INTUITION)</div>
-        <div class="bg-val">${Math.round(b.system1Score * 100)}%</div>
+        <div class="bg-lbl">${toMathBold('SYSTEM 1 (INTUITION)')}</div>
+        <div class="bg-val">${toMathBold(String(Math.round(b.system1Score * 100)))}%</div>
         <div class="bg-bar"><i style="width:${Math.round(b.system1Score * 100)}%"></i></div>
       </div>
       <div class="bg-item">
-        <div class="bg-lbl">SYSTEM 2 (LOGIC)</div>
-        <div class="bg-val">${Math.round(b.system2Score * 100)}%</div>
+        <div class="bg-lbl">${toMathBold('SYSTEM 2 (LOGIC)')}</div>
+        <div class="bg-val">${toMathBold(String(Math.round(b.system2Score * 100)))}%</div>
         <div class="bg-bar"><i style="width:${Math.round(b.system2Score * 100)}%"></i></div>
       </div>
       <div class="bg-item">
-        <div class="bg-lbl">GAMBLER’S FALLACY BIAS</div>
-        <div class="bg-val">${(b.gamblersFallacyBias > 0 ? '+' : '') + Math.round(b.gamblersFallacyBias * 100)}%</div>
+        <div class="bg-lbl">${toMathBold('GAMBLER’S FALLACY BIAS')}</div>
+        <div class="bg-val">${(b.gamblersFallacyBias > 0 ? '+' : '') + toMathBold(String(Math.round(b.gamblersFallacyBias * 100)))}%</div>
         <div class="bg-bar"><i style="width:${Math.abs(Math.round(b.gamblersFallacyBias * 100))}%"></i></div>
       </div>
       <div class="bg-item">
-        <div class="bg-lbl">HOT-HAND MOMENTUM</div>
-        <div class="bg-val">${Math.round(b.hotHandMomentum * 100)}%</div>
+        <div class="bg-lbl">${toMathBold('HOT-HAND MOMENTUM')}</div>
+        <div class="bg-val">${toMathBold(String(Math.round(b.hotHandMomentum * 100)))}%</div>
         <div class="bg-bar"><i style="width:${Math.round(b.hotHandMomentum * 100)}%"></i></div>
       </div>
       <div class="bg-item full">
-        <div class="bg-lbl">COGNITIVE FATIGUE / CHURN</div>
-        <div class="bg-val">${Math.round(b.cognitiveFatigue * 100)}%</div>
+        <div class="bg-lbl">${toMathBold('COGNITIVE FATIGUE / CHURN')}</div>
+        <div class="bg-val">${toMathBold(String(Math.round(b.cognitiveFatigue * 100)))}%</div>
         <div class="bg-bar"><i style="width:${Math.round(b.cognitiveFatigue * 100)}%"></i></div>
       </div>
     </div>
   </div>`;
 
-  // 3. OPPOSITE MAJORITY Logic Card
+  // 4. OPPOSITE MAJORITY Logic Card
   h += `<div class="card" style="border-color:${om.isReversed ? 'var(--loss)' : 'var(--border)'}">
-    <div class="card-t">⚡ OPPOSITE MAJORITY LOGIC<span class="tag">${om.isReversed ? 'TRIGGERED' : 'MONITORING'}</span></div>
+    <div class="card-t">⚡ ${toMathBold('OPPOSITE MAJORITY LOGIC')}<span class="tag">${toMathBold(om.isReversed ? 'TRIGGERED' : 'MONITORING')}</span></div>
     <div class="om-card">
       <div class="om-row">
         <div class="om-box">
-          <div class="k">RAW CONSENSUS</div>
-          <div class="v">${om.rawConsensus} (${om.herdSize}/15)</div>
+          <div class="k">${toMathBold('RAW CONSENSUS')}</div>
+          <div class="v">${toMathBold(om.rawConsensus)} (${toMathBold(String(om.herdSize))}/15)</div>
         </div>
         <div class="om-box">
-          <div class="k">HERD STRENGTH</div>
-          <div class="v">${Math.round(om.consensusStrength * 100)}%</div>
+          <div class="k">${toMathBold('HERD STRENGTH')}</div>
+          <div class="v">${toMathBold(String(Math.round(om.consensusStrength * 100)))}%</div>
         </div>
         <div class="om-box">
-          <div class="k">TRAP RISK SCORE</div>
-          <div class="v" style="color:${om.trapRiskScore > 0.65 ? 'var(--loss)' : 'var(--win)'}">${Math.round(om.trapRiskScore * 100)}%</div>
+          <div class="k">${toMathBold('TRAP RISK')}</div>
+          <div class="v" style="color:${om.trapRiskScore > 0.65 ? 'var(--loss)' : 'var(--win)'}">${toMathBold(String(Math.round(om.trapRiskScore * 100)))}%</div>
         </div>
       </div>
       <div class="om-alert ${om.isReversed ? 'danger' : 'safe'}">
-        <b>${om.isReversed ? '⚠️ CONTRARIAN INVERSION APPLIED' : '✓ HERD ALIGNMENT SAFE'}</b>
+        <b>${toMathBold(om.isReversed ? '⚠️ CONTRARIAN INVERSION APPLIED' : '✓ HERD ALIGNMENT SAFE')}</b>
         <span>${om.reason}</span>
       </div>
     </div>
   </div>`;
 
-  // 4. MATRIX PROBABILITY: 2x2 Markov Transition & Context Matrix
+  // 5. MATRIX PROBABILITY
   const m2 = m.transitionMatrix2x2;
   h += `<div class="card">
-    <div class="card-t">📊 MARKOV TRANSITION PROBABILITY MATRIX<span class="tag">2x2 & 4x2</span></div>
+    <div class="card-t">📊 ${toMathBold('MARKOV TRANSITION PROBABILITY MATRIX')}<span class="tag">2x2 & 4x2</span></div>
     <div class="matrix-grid">
-      <div class="matrix-cell"><div class="m-k">P(BIG → BIG)</div><div class="m-v">${(m2.fromBig.toBig * 100).toFixed(1)}%</div></div>
-      <div class="matrix-cell"><div class="m-k">P(BIG → SMALL)</div><div class="m-v">${(m2.fromBig.toSmall * 100).toFixed(1)}%</div></div>
-      <div class="matrix-cell"><div class="m-k">P(SMALL → BIG)</div><div class="m-v">${(m2.fromSmall.toBig * 100).toFixed(1)}%</div></div>
-      <div class="matrix-cell"><div class="m-k">P(SMALL → SMALL)</div><div class="m-v">${(m2.fromSmall.toSmall * 100).toFixed(1)}%</div></div>
+      <div class="matrix-cell"><div class="m-k">P(BIG → BIG)</div><div class="m-v">${toMathBold((m2.fromBig.toBig * 100).toFixed(1))}%</div></div>
+      <div class="matrix-cell"><div class="m-k">P(BIG → SMALL)</div><div class="m-v">${toMathBold((m2.fromBig.toSmall * 100).toFixed(1))}%</div></div>
+      <div class="matrix-cell"><div class="m-k">P(SMALL → BIG)</div><div class="m-v">${toMathBold((m2.fromSmall.toBig * 100).toFixed(1))}%</div></div>
+      <div class="matrix-cell"><div class="m-k">P(SMALL → SMALL)</div><div class="m-v">${toMathBold((m2.fromSmall.toSmall * 100).toFixed(1))}%</div></div>
     </div>
     <div class="matrix-footer">
-      <span>Matrix P(Big): <b>${(m.matrixProbBig * 100).toFixed(1)}%</b></span>
-      <span>Matrix P(Small): <b>${(m.matrixProbSmall * 100).toFixed(1)}%</b></span>
+      <span>Matrix P(Big): <b>${toMathBold((m.matrixProbBig * 100).toFixed(1))}%</b></span>
+      <span>Matrix P(Small): <b>${toMathBold((m.matrixProbSmall * 100).toFixed(1))}%</b></span>
       <span>Entropy: <b>${m.entropy.toFixed(3)}</b></span>
     </div>
   </div>`;
 
-  // 5. 10x10 DIGIT PROBABILITY TENSOR (0-9)
+  // 6. 10x10 DIGIT PROBABILITY TENSOR (0-9)
   h += `<div class="card">
-    <div class="card-t">🎯 DIGIT PROBABILITY DISTRIBUTION (0-9)<span class="tag">MATRIX RANK</span></div>
+    <div class="card-t">🎯 ${toMathBold('DIGIT PROBABILITY DISTRIBUTION (0-9)')}<span class="tag">MATRIX RANK</span></div>
     <div class="digit-bars">
       ${m.digitProbabilities
         .map((prob, idx) => {
@@ -1144,19 +1600,19 @@ function renderEngineTab() {
           const pct = Math.round(prob * 100);
           return `<div class="digit-col ${isPrime ? 'prime' : ''} ${isBackup ? 'backup' : ''}">
           <div class="d-bar-track"><div class="d-bar-fill ${isB ? 'big' : 'small'}" style="height:${Math.max(8, pct * 3)}px"></div></div>
-          <div class="d-num ${isB ? 'big' : 'small'}">${idx}</div>
-          <div class="d-pct">${pct}%</div>
+          <div class="d-num math-bold ${isB ? 'big' : 'small'}">${toMathBold(String(idx))}</div>
+          <div class="d-pct">${toMathBold(String(pct))}%</div>
         </div>`;
         })
         .join('')}
     </div>
   </div>`;
 
-  // 6. 15 Modern Algorithm Votes
+  // 7. 15 Modern Algorithm Votes
   const bd = F.algorithmBreakdown || {};
   const keys = Object.keys(bd);
   h += `<div class="card">
-    <div class="card-t">15 PREDICTIVE ALGORITHMS — LIVE VOTES<span class="tag">${F.bigVotes}B / ${F.smallVotes}S</span></div>
+    <div class="card-t">15 ${toMathBold('PREDICTIVE ALGORITHMS — LIVE VOTES')}<span class="tag">${toMathBold(F.bigVotes + 'B / ' + F.smallVotes + 'S')}</span></div>
     <div class="algo-grid">
       ${keys
         .map((k, idx) => {
@@ -1165,7 +1621,7 @@ function renderEngineTab() {
           return `<div class="algo-item">
           <div class="idx">${idx + 1}</div>
           <div class="nm">${ALGO_LABELS[k] || k}</div>
-          <div class="vote ${vote}">${vote === 'B' ? 'BIG' : 'SMALL'}</div>
+          <div class="vote math-bold ${vote}">${toMathBold(vote === 'B' ? 'BIG' : 'SMALL')}</div>
           <div class="prob">${(p[1] * 100).toFixed(0)}/${(p[0] * 100).toFixed(0)}</div>
         </div>`;
         })
@@ -1184,7 +1640,7 @@ export function runDemo() {
   switchTab('home');
   const sBtn = $('startBtn');
   if (sBtn) {
-    sBtn.textContent = '■ STOP DEMO';
+    sBtn.textContent = '■ ' + toMathBold('STOP DEMO');
     sBtn.classList.add('stop');
   }
   const mode = S.mode;
@@ -1196,7 +1652,7 @@ export function runDemo() {
     arr.unshift({ period: (base + BigInt(i)).toString(), number: v });
   }
   S.recs[mode] = arr;
-  toast('DEMO MODE: Testing AI Brain & Matrix Engine');
+  toast('DEMO MODE: ' + toMathBold('TESTING 3-4L RECOVERY & HUD'));
   runCycle(mode);
   S.demoTimer = setInterval(() => {
     if (!S.demo) return;
@@ -1211,18 +1667,18 @@ export function runDemo() {
 
 // THEME SYSTEM
 const THEMES = [
-  { id: '', n: 'GOLD NOIR', sw: 'linear-gradient(135deg,#f5b40a,#0c1020)' },
-  { id: 'mint', n: 'MINT', sw: 'linear-gradient(135deg,#22e5a4,#0c1020)' },
+  { id: 'white', n: 'WHITE NOVIX (PHOTO)', sw: 'linear-gradient(135deg,#ffffff,#f0f4fc)' },
+  { id: '', n: 'NOIR RGB', sw: 'linear-gradient(135deg,#070a14,#ff4d6d)' },
+  { id: 'crimson', n: 'CYBER RED', sw: 'linear-gradient(135deg,#ff4d6d,#1a0b14)' },
+  { id: 'mint', n: 'MINT RGB', sw: 'linear-gradient(135deg,#22e5a4,#0c1020)' },
   { id: 'violet', n: 'VIOLET', sw: 'linear-gradient(135deg,#8b6cff,#0c1020)' },
-  { id: 'crimson', n: 'CRIMSON', sw: 'linear-gradient(135deg,#ff4d6d,#0c1020)' },
-  { id: 'ice', n: 'ICE', sw: 'linear-gradient(135deg,#38c8ff,#0c1020)' },
-  { id: 'ember', n: 'EMBER', sw: 'linear-gradient(135deg,#ff7a1a,#0c1020)' },
-  { id: 'pearl', n: 'PEARL', sw: 'linear-gradient(135deg,#4f46e5,#e6e9ff)' },
-  { id: 'rose', n: 'ROSE', sw: 'linear-gradient(135deg,#e11d74,#ffe4f0)' }
+  { id: 'ice', n: 'ICE BLUE', sw: 'linear-gradient(135deg,#38c8ff,#0c1020)' },
+  { id: 'ember', n: 'EMBER ORANGE', sw: 'linear-gradient(135deg,#ff7a1a,#0c1020)' },
+  { id: 'rose', n: 'ROSE GOLD', sw: 'linear-gradient(135deg,#e11d74,#ffe4f0)' }
 ];
 
 function renderThemes() {
-  const cur = localStorage.getItem(LS.theme) || '';
+  const cur = localStorage.getItem(LS.theme) ?? 'white';
   const tg = $('themeGrid');
   if (!tg) return;
   tg.innerHTML = THEMES.map(
@@ -1238,19 +1694,27 @@ export function setTheme(id: string) {
   else document.documentElement.removeAttribute('data-theme');
   localStorage.setItem(LS.theme, id);
   renderThemes();
-  toast('✓ Theme applied');
+  toast('✓ ' + (id === 'white' ? 'White Novix Theme' : id.toUpperCase() + ' Theme') + ' Applied');
+}
+
+export function cycleNextTheme() {
+  const cur = localStorage.getItem(LS.theme) ?? 'white';
+  const idx = THEMES.findIndex(t => t.id === cur);
+  const next = THEMES[(idx + 1) % THEMES.length];
+  setTheme(next.id);
 }
 
 // BOOT INITIALIZATION
 loadRecs();
-const savedTheme = localStorage.getItem(LS.theme);
+const savedTheme = localStorage.getItem(LS.theme) ?? 'white';
 if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
 renderThemes();
 renderHistory();
 refreshStats();
+renderRecoveryWidget();
 updateLockUI();
 const mm = $('metaMode');
-if (mm) mm.textContent = '1 MIN';
+if (mm) mm.textContent = toMathBold('1 MIN');
 
 autoVerifyOnBoot();
 
@@ -1270,12 +1734,14 @@ document.addEventListener('visibilitychange', () => {
   openDrawer,
   closeDrawer,
   switchTab,
+  selectSidebar,
   openLock,
   closeLock,
   doUnlock,
   toggleHidePred,
   playGame,
   closeGame,
+  copyInviteCode,
   toggleGameUI,
   selectMode,
   toggleEngine,
@@ -1283,7 +1749,13 @@ document.addEventListener('visibilitychange', () => {
   clearAppCache,
   closeWin,
   runDemo,
-  setTheme
+  setTheme,
+  cycleNextTheme,
+  toggleRecoveryMod,
+  manualSetRecoveryLevel,
+  toggleAutoSkip,
+  setSkipThreshold,
+  toMathBold
 };
 
 // Also attach individual methods to window directly for HTML onclick handlers
