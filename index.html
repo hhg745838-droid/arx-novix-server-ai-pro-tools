@@ -474,6 +474,10 @@ body.desktop-mode #tab-home.active {
   align-items: start !important;
 }
 
+body.desktop-mode #tab-home > .game-select-strip {
+  grid-column: 1 / -1;
+}
+
 body.desktop-mode #tab-home > .card:first-of-type {
   grid-column: 1;
 }
@@ -843,10 +847,143 @@ body.desktop-mode .mobile-nav-pills {
 .game-card:hover{transform:translateY(-1px);border-color:var(--primary-border)}
 .game-card.featured{border:2px solid #f59e0b;background:linear-gradient(135deg,rgba(245,158,11,0.06),var(--card))}
 .game-card.vip-feat{border:2px solid #8b5cf6;background:linear-gradient(135deg,rgba(139,92,246,0.06),var(--card))}
+.game-card.emerald-feat{border:2px solid #10b981;background:linear-gradient(135deg,rgba(16,185,129,0.06),var(--card))}
+.game-card.cyan-feat{border:2px solid #0284c7;background:linear-gradient(135deg,rgba(2,132,199,0.06),var(--card))}
+.game-card.amber-feat{border:2px solid #f59e0b;background:linear-gradient(135deg,rgba(245,158,11,0.06),var(--card))}
 .gc-icon{width:50px;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-family:Orbitron;font-weight:900;color:#fff;font-size:16px;flex:none;box-shadow:var(--shadow-sm)}
 .gc-play{border:none;padding:9px 14px;border-radius:10px;background:var(--grad-primary);color:#fff;font-family:Orbitron;font-size:9px;font-weight:900;cursor:pointer;transition:all .2s}
 .gc-play:hover{transform:scale(1.03)}
 .gc-copy{border:1px solid var(--border);padding:8px 10px;border-radius:8px;background:var(--bg-2);color:var(--ink);font-family:JetBrains Mono;font-size:8.5px;font-weight:700;cursor:pointer}
+.gc-reg-link{border:1px solid rgba(16,185,129,0.3);background:rgba(16,185,129,0.08);color:var(--win);padding:8px 10px;border-radius:8px;font-family:Orbitron;font-size:8.5px;font-weight:900;text-decoration:none;display:inline-flex;align-items:center;gap:3px;cursor:pointer}
+
+/* GAME PLATFORM QUICK SELECT STRIP (HUD INTEGRATED) */
+.game-select-strip {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  box-shadow: var(--shadow-sm);
+}
+.gss-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.gss-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 8px;
+  font-weight: 900;
+  color: var(--muted);
+  letter-spacing: 0.8px;
+}
+.gss-active-tag {
+  font-family: Orbitron;
+  font-size: 8px;
+  font-weight: 900;
+  color: var(--primary);
+  background: rgba(230,30,67,0.08);
+  border: 1px solid var(--primary-border);
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+.gss-chips {
+  display: flex;
+  gap: 5px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+.gss-chips::-webkit-scrollbar { display: none; }
+.gss-chip {
+  flex: 1;
+  min-width: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 6px;
+  border-radius: 9px;
+  background: var(--bg-2);
+  border: 1.2px solid var(--border);
+  font-family: Orbitron, sans-serif;
+  font-size: 8px;
+  font-weight: 900;
+  color: var(--ink-soft);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.gss-chip:hover {
+  border-color: var(--primary-border);
+}
+.gss-chip.active {
+  background: var(--grad-primary);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 3px 10px var(--primary-soft);
+}
+.gss-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+.gss-btn-play {
+  flex: 1.2;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: var(--grad-primary);
+  color: #fff;
+  font-family: Orbitron;
+  font-size: 8.5px;
+  font-weight: 900;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: transform .2s;
+}
+.gss-btn-play:hover { transform: scale(1.02); }
+.gss-btn-code {
+  flex: 1;
+  padding: 7px 8px;
+  border-radius: 8px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  color: var(--ink);
+  font-family: JetBrains Mono;
+  font-size: 8px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.gss-btn-reg {
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: rgba(16,185,129,0.12);
+  border: 1px solid rgba(16,185,129,0.3);
+  color: var(--win);
+  font-family: Orbitron;
+  font-size: 8px;
+  font-weight: 900;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
 
 /* DRAWER */
 .drawer-mask{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:48;opacity:0;pointer-events:none;transition:opacity .3s}
@@ -1061,6 +1198,35 @@ body.desktop-mode .mobile-nav-pills {
 
       <!-- HOME VIEW (LIVE PREDICTIONS) -->
       <div class="view active" id="tab-home">
+        <!-- GAME PLATFORM FAST SWITCHER (REQUESTED PLATFORMS INCLUDED) -->
+        <div class="game-select-strip" id="gameSelectStrip">
+          <div class="gss-header">
+            <div class="gss-label math-bold">
+              <span>🎮</span>
+              <span>𝐒𝐄𝐋𝐄𝐂𝐓 𝐆𝐀𝐌𝐄 𝐏𝐋𝐀𝐓𝐅𝐎𝐑𝐌</span>
+            </div>
+            <span id="activeGameBadge" class="gss-active-tag math-bold">💎 𝟏𝟑𝐋 𝐆𝐀𝐌𝐄</span>
+          </div>
+          <div class="gss-chips">
+            <button class="gss-chip active math-bold" id="gchip-13l" onclick="window.__ARX.selectPlatform('13l')">💎 𝟏𝟑𝐋</button>
+            <button class="gss-chip math-bold" id="gchip-amar" onclick="window.__ARX.selectPlatform('amar')">🏆 𝐀𝐌𝐀𝐑</button>
+            <button class="gss-chip math-bold" id="gchip-hgnice" onclick="window.__ARX.selectPlatform('hgnice')">🌟 𝐇𝐆 𝐍𝐈𝐂𝐄</button>
+            <button class="gss-chip math-bold" id="gchip-tigro" onclick="window.__ARX.selectPlatform('tigro')">🐯 𝐓𝐈𝐆𝐑𝐎</button>
+            <button class="gss-chip math-bold" id="gchip-dkwin" onclick="window.__ARX.selectPlatform('dkwin')">👑 𝐃𝐊𝐖𝐈𝐍</button>
+          </div>
+          <div class="gss-actions">
+            <button class="gss-btn-play math-bold" id="quickPlayBtn" onclick="window.__ARX.playActivePlatform()">
+              ▶ 𝐏𝐋𝐀𝐘 𝐍𝐎𝐖
+            </button>
+            <button class="gss-btn-code math-bold" id="quickCopyBtn" onclick="window.__ARX.copyActivePlatformCode()">
+              📋 𝐂𝐎𝐃𝐄: <span id="quickCodeTxt">XGYKGGN</span>
+            </button>
+            <a href="https://13lgame5.com/register?inviteCode=XGYKGGN&from=web" target="_blank" class="gss-btn-reg math-bold" id="quickRegLink">
+              ↗ 𝐑𝐄𝐆𝐈𝐒𝐓𝐄𝐑
+            </a>
+          </div>
+        </div>
+
         <div class="card">
           <div class="card-head">
             <div class="ch-left">
@@ -1384,7 +1550,64 @@ body.desktop-mode .mobile-nav-pills {
             </div>
           </div>
 
-          <!-- 1. TIGRO 666 (FEATURED AS REQUESTED) -->
+          <!-- 1. 13L GAME (REQUESTED AS VERIFIED VIP) -->
+          <div class="game-card emerald-feat">
+            <div class="gc-icon" style="background:linear-gradient(135deg,#10b981,#047857);font-size:22px">💎</div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:6px">
+                <div class="math-bold" style="font-size:13px;font-weight:900;color:#059669">𝟏𝟑𝐋 𝐆𝐀𝐌𝐄</div>
+                <span style="font-size:7px;padding:2px 5px;border-radius:4px;background:#10b98122;color:#059669;font-weight:900">𝐇𝐎𝐓 𝐕𝐈𝐏</span>
+              </div>
+              <div style="font-size:8.5px;color:var(--muted);margin-top:2px">
+                Invite Code: <b style="color:var(--ink);font-family:JetBrains Mono">XGYKGGN</b>
+              </div>
+              <div style="display:flex;gap:4px;margin-top:6px;flex-wrap:wrap">
+                <button class="gc-copy math-bold" onclick="window.__ARX.copyInviteCode('XGYKGGN','13L GAME')">📋 𝐂𝐎𝐏𝐘 𝐂𝐎𝐃𝐄</button>
+                <a href="https://13lgame5.com/register?inviteCode=XGYKGGN&from=web" target="_blank" class="gc-reg-link math-bold">↗ 𝐑𝐄𝐆𝐈𝐒𝐓𝐄𝐑</a>
+              </div>
+            </div>
+            <button class="gc-play math-bold" style="background:linear-gradient(135deg,#10b981,#047857)" onclick="window.__ARX.playGame('https://13lgame5.com/register?inviteCode=XGYKGGN&from=web','13L GAME')">▶ 𝐏𝐋𝐀𝐘</button>
+          </div>
+
+          <!-- 2. AMAR CLUB (REQUESTED AS OFFICIAL PLATFORM) -->
+          <div class="game-card cyan-feat">
+            <div class="gc-icon" style="background:linear-gradient(135deg,#0ea5e9,#0284c7);font-size:22px">🏆</div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:6px">
+                <div class="math-bold" style="font-size:13px;font-weight:900;color:#0284c7">𝐀𝐌𝐀𝐑 𝐂𝐋𝐔𝐁</div>
+                <span style="font-size:7px;padding:2px 5px;border-radius:4px;background:#0ea5e922;color:#0284c7;font-weight:900">𝐎𝐅𝐅𝐈𝐂𝐈𝐀𝐋</span>
+              </div>
+              <div style="font-size:8.5px;color:var(--muted);margin-top:2px">
+                Invite Code: <b style="color:var(--ink);font-family:JetBrains Mono">11756954503</b>
+              </div>
+              <div style="display:flex;gap:4px;margin-top:6px;flex-wrap:wrap">
+                <button class="gc-copy math-bold" onclick="window.__ARX.copyInviteCode('11756954503','AMAR CLUB')">📋 𝐂𝐎𝐏𝐘 𝐂𝐎𝐃𝐄</button>
+                <a href="https://www.amarclub1.com/#/register?invitationCode=11756954503" target="_blank" class="gc-reg-link math-bold">↗ 𝐑𝐄𝐆𝐈𝐒𝐓𝐄𝐑</a>
+              </div>
+            </div>
+            <button class="gc-play math-bold" style="background:linear-gradient(135deg,#0ea5e9,#0284c7)" onclick="window.__ARX.playGame('https://www.amarclub1.com/#/register?invitationCode=11756954503','AMAR CLUB')">▶ 𝐏𝐋𝐀𝐘</button>
+          </div>
+
+          <!-- 3. HG NICE (REQUESTED AS HIGH-SPEED VIP PLATFORM) -->
+          <div class="game-card amber-feat">
+            <div class="gc-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);font-size:22px">🌟</div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:6px">
+                <div class="math-bold" style="font-size:13px;font-weight:900;color:#d97706">𝐇𝐆 𝐍𝐈𝐂𝐄</div>
+                <span style="font-size:7px;padding:2px 5px;border-radius:4px;background:#f59e0b22;color:#d97706;font-weight:900">𝐕𝐈𝐏 𝐒𝐏𝐄𝐄𝐃</span>
+              </div>
+              <div style="font-size:8.5px;color:var(--muted);margin-top:2px">
+                Invite Code: <b style="color:var(--ink);font-family:JetBrains Mono">541612199538</b>
+              </div>
+              <div style="display:flex;gap:4px;margin-top:6px;flex-wrap:wrap">
+                <button class="gc-copy math-bold" onclick="window.__ARX.copyInviteCode('541612199538','HG NICE')">📋 𝐂𝐎𝐏𝐘 𝐂𝐎𝐃𝐄</button>
+                <a href="https://www.hgnice.vip/#/register?invitationCode=541612199538" target="_blank" class="gc-reg-link math-bold">↗ 𝐑𝐄𝐆𝐈𝐒𝐓𝐄𝐑</a>
+              </div>
+            </div>
+            <button class="gc-play math-bold" style="background:linear-gradient(135deg,#f59e0b,#d97706)" onclick="window.__ARX.playGame('https://www.hgnice.vip/#/register?invitationCode=541612199538','HG NICE')">▶ 𝐏𝐋𝐀𝐘</button>
+          </div>
+
+          <!-- 4. TIGRO 666 (FEATURED VIP) -->
           <div class="game-card featured">
             <div class="gc-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);font-size:22px">🐯</div>
             <div style="flex:1;min-width:0">
@@ -1395,15 +1618,15 @@ body.desktop-mode .mobile-nav-pills {
               <div style="font-size:8.5px;color:var(--muted);margin-top:2px">
                 Invite Code: <b style="color:var(--ink);font-family:JetBrains Mono">21571454474</b>
               </div>
-              <div style="display:flex;gap:4px;margin-top:6px">
+              <div style="display:flex;gap:4px;margin-top:6px;flex-wrap:wrap">
                 <button class="gc-copy math-bold" onclick="window.__ARX.copyInviteCode('21571454474','TIGRO 666')">📋 𝐂𝐎𝐏𝐘 𝐂𝐎𝐃𝐄</button>
-                <a href="https://www.tigro666.com/#/register?invitationCode=21571454474" target="_blank" class="gc-copy math-bold" style="text-decoration:none;display:inline-flex;align-items:center">↗ 𝐑𝐄𝐆𝐈𝐒𝐓𝐄𝐑</a>
+                <a href="https://www.tigro666.com/#/register?invitationCode=21571454474" target="_blank" class="gc-reg-link math-bold">↗ 𝐑𝐄𝐆𝐈𝐒𝐓𝐄𝐑</a>
               </div>
             </div>
             <button class="gc-play math-bold" onclick="window.__ARX.playGame('https://www.tigro666.com/#/register?invitationCode=21571454474','TIGRO 666')">▶ 𝐏𝐋𝐀𝐘</button>
           </div>
 
-          <!-- 2. DKWIN 7 (FEATURED AS REQUESTED) -->
+          <!-- 5. DKWIN 7 (VIP EXCLUSIVE) -->
           <div class="game-card vip-feat">
             <div class="gc-icon" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9);font-size:22px">👑</div>
             <div style="flex:1;min-width:0">
@@ -1414,38 +1637,12 @@ body.desktop-mode .mobile-nav-pills {
               <div style="font-size:8.5px;color:var(--muted);margin-top:2px">
                 Invite Code: <b style="color:var(--ink);font-family:JetBrains Mono">15438314281</b>
               </div>
-              <div style="display:flex;gap:4px;margin-top:6px">
+              <div style="display:flex;gap:4px;margin-top:6px;flex-wrap:wrap">
                 <button class="gc-copy math-bold" onclick="window.__ARX.copyInviteCode('15438314281','DKWIN 7')">📋 𝐂𝐎𝐏𝐘 𝐂𝐎𝐃𝐄</button>
-                <a href="https://dkwin7.com/#/register?invitationCode=15438314281" target="_blank" class="gc-copy math-bold" style="text-decoration:none;display:inline-flex;align-items:center">↗ 𝐑𝐄𝐆𝐈𝐒𝐓𝐄𝐑</a>
+                <a href="https://dkwin7.com/#/register?invitationCode=15438314281" target="_blank" class="gc-reg-link math-bold">↗ 𝐑𝐄𝐆𝐈𝐒𝐓𝐄𝐑</a>
               </div>
             </div>
             <button class="gc-play math-bold" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9)" onclick="window.__ARX.playGame('https://dkwin7.com/#/register?invitationCode=15438314281','DKWIN 7')">▶ 𝐏𝐋𝐀𝐘</button>
-          </div>
-
-          <!-- SECONDARY PLATFORMS -->
-          <div class="game-card">
-            <div class="gc-icon" style="background:#10b981">13L</div>
-            <div style="flex:1">
-              <div class="math-bold" style="font-size:12px;font-weight:900">𝟏𝟑𝐋 𝐆𝐀𝐌𝐄</div>
-              <div style="font-size:8.5px;color:var(--muted)">Invite: <b>XGYKGGN</b></div>
-            </div>
-            <button class="gc-play math-bold" onclick="window.__ARX.playGame('https://13lgame5.com/register?inviteCode=XGYKGGN&from=web','13L GAME')">𝐏𝐋𝐀𝐘</button>
-          </div>
-          <div class="game-card">
-            <div class="gc-icon" style="background:#f59e0b">HG</div>
-            <div style="flex:1">
-              <div class="math-bold" style="font-size:12px;font-weight:900">𝐇𝐆 𝐍𝐈𝐂𝐄</div>
-              <div style="font-size:8.5px;color:var(--muted)">Invite: <b>541612199538</b></div>
-            </div>
-            <button class="gc-play math-bold" onclick="window.__ARX.playGame('https://www.hgnice.vip/#/register?invitationCode=541612199538','HG NICE')">𝐏𝐋𝐀𝐘</button>
-          </div>
-          <div class="game-card">
-            <div class="gc-icon" style="background:#0ea5e9">AC</div>
-            <div style="flex:1">
-              <div class="math-bold" style="font-size:12px;font-weight:900">𝐀𝐌𝐀𝐑 𝐂𝐋𝐔𝐁</div>
-              <div style="font-size:8.5px;color:var(--muted)">Invite: <b>11756954503</b></div>
-            </div>
-            <button class="gc-play math-bold" onclick="window.__ARX.playGame('https://www.amarclub1.com/#/register?invitationCode=11756954503','AMAR CLUB')">𝐏𝐋𝐀𝐘</button>
           </div>
         </div>
       </div>
@@ -1540,6 +1737,18 @@ body.desktop-mode .mobile-nav-pills {
     <div class="item math-bold" onclick="window.__ARX.closeDrawer();window.__ARX.switchTab('home')">
       <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
       <span>𝐋𝐈𝐕𝐄 𝐏𝐑𝐄𝐃𝐈𝐂𝐓𝐈𝐎𝐍</span>
+    </div>
+    <div class="item math-bold" onclick="window.__ARX.closeDrawer();window.__ARX.playGame('https://13lgame5.com/register?inviteCode=XGYKGGN&from=web','13L GAME')">
+      <span style="font-size:16px">💎</span>
+      <span>𝐏𝐋𝐀𝐘 𝟏𝟑𝐋 𝐆𝐀𝐌𝐄</span>
+    </div>
+    <div class="item math-bold" onclick="window.__ARX.closeDrawer();window.__ARX.playGame('https://www.amarclub1.com/#/register?invitationCode=11756954503','AMAR CLUB')">
+      <span style="font-size:16px">🏆</span>
+      <span>𝐏𝐋𝐀𝐘 𝐀𝐌𝐀𝐑 𝐂𝐋𝐔𝐁</span>
+    </div>
+    <div class="item math-bold" onclick="window.__ARX.closeDrawer();window.__ARX.playGame('https://www.hgnice.vip/#/register?invitationCode=541612199538','HG NICE')">
+      <span style="font-size:16px">🌟</span>
+      <span>𝐏𝐋𝐀𝐘 𝐇𝐆 𝐍𝐈𝐂𝐄</span>
     </div>
     <div class="item math-bold" onclick="window.__ARX.closeDrawer();window.__ARX.playGame('https://www.tigro666.com/#/register?invitationCode=21571454474','TIGRO 666')">
       <span style="font-size:16px">🐯</span>

@@ -625,6 +625,127 @@ export function toggleHidePred() {
   toast(S.hidePred ? '🙈 ' + toMathBold('PRIVACY MODE ON') : '👁 ' + toMathBold('PREDICTIONS VISIBLE'));
 }
 
+// VERIFIED GAME PLATFORMS (USER REQUESTED: 13L GAME, AMAR CLUB, HG NICE, TIGRO 666, DKWIN 7)
+export interface GamePlatform {
+  id: string;
+  name: string;
+  shortName: string;
+  icon: string;
+  url: string;
+  inviteCode: string;
+  badge: string;
+  accent: string;
+}
+
+export const GAME_PLATFORMS: Record<string, GamePlatform> = {
+  '13l': {
+    id: '13l',
+    name: '13L GAME',
+    shortName: '13L',
+    icon: '💎',
+    url: 'https://13lgame5.com/register?inviteCode=XGYKGGN&from=web',
+    inviteCode: 'XGYKGGN',
+    badge: 'HOT VIP',
+    accent: '#10b981'
+  },
+  'amar': {
+    id: 'amar',
+    name: 'AMAR CLUB',
+    shortName: 'AMAR',
+    icon: '🏆',
+    url: 'https://www.amarclub1.com/#/register?invitationCode=11756954503',
+    inviteCode: '11756954503',
+    badge: 'OFFICIAL',
+    accent: '#0284c7'
+  },
+  'hgnice': {
+    id: 'hgnice',
+    name: 'HG NICE',
+    shortName: 'HG NICE',
+    icon: '🌟',
+    url: 'https://www.hgnice.vip/#/register?invitationCode=541612199538',
+    inviteCode: '541612199538',
+    badge: 'VIP SPEED',
+    accent: '#f59e0b'
+  },
+  'tigro': {
+    id: 'tigro',
+    name: 'TIGRO 666',
+    shortName: 'TIGRO',
+    icon: '🐯',
+    url: 'https://www.tigro666.com/#/register?invitationCode=21571454474',
+    inviteCode: '21571454474',
+    badge: 'HOT VIP',
+    accent: '#d97706'
+  },
+  'dkwin': {
+    id: 'dkwin',
+    name: 'DKWIN 7',
+    shortName: 'DKWIN',
+    icon: '👑',
+    url: 'https://dkwin7.com/#/register?invitationCode=15438314281',
+    inviteCode: '15438314281',
+    badge: 'VIP EXCL',
+    accent: '#7c3aed'
+  }
+};
+
+export let activePlatformId = '13l';
+
+export function selectPlatform(id: string) {
+  playCyberSound('click');
+  if (!GAME_PLATFORMS[id]) id = '13l';
+  activePlatformId = id;
+  try {
+    localStorage.setItem('novix_selected_platform', id);
+  } catch (e) {}
+  renderSelectedPlatform();
+  const p = GAME_PLATFORMS[id];
+  toast(`🎮 ${toMathBold(p.name)} Selected!`);
+}
+
+export function playActivePlatform() {
+  const p = GAME_PLATFORMS[activePlatformId] || GAME_PLATFORMS['13l'];
+  playGame(p.url, p.name);
+}
+
+export function copyActivePlatformCode() {
+  const p = GAME_PLATFORMS[activePlatformId] || GAME_PLATFORMS['13l'];
+  copyInviteCode(p.inviteCode, p.name);
+}
+
+export function renderSelectedPlatform() {
+  const p = GAME_PLATFORMS[activePlatformId] || GAME_PLATFORMS['13l'];
+  const badge = $('activeGameBadge');
+  if (badge) {
+    badge.textContent = `${p.icon} ${toMathBold(p.name)}`;
+    badge.style.color = p.accent;
+    badge.style.borderColor = p.accent;
+    badge.style.background = `${p.accent}18`;
+  }
+
+  // Update chip active states
+  Object.keys(GAME_PLATFORMS).forEach(k => {
+    const chip = $(`gchip-${k}`);
+    if (chip) {
+      if (k === activePlatformId) {
+        chip.classList.add('active');
+        chip.style.borderColor = 'transparent';
+      } else {
+        chip.classList.remove('active');
+        chip.style.borderColor = '';
+      }
+    }
+  });
+
+  // Update action bar
+  const quickCode = $('quickCodeTxt');
+  if (quickCode) quickCode.textContent = p.inviteCode;
+
+  const quickReg = $('quickRegLink') as HTMLAnchorElement | null;
+  if (quickReg) quickReg.href = p.url;
+}
+
 // GAME LAUNCHER & INVITATION CODE COPY
 export function copyInviteCode(code: string, name: string) {
   playCyberSound('click');
@@ -2089,6 +2210,17 @@ if (savedDesktop === '1' || (savedDesktop === null && window.innerWidth >= 1024)
 const mm = $('metaMode');
 if (mm) mm.textContent = toMathBold('1 MIN');
 
+// Restore selected game platform
+try {
+  const savedPlatform = localStorage.getItem('novix_selected_platform');
+  if (savedPlatform && GAME_PLATFORMS[savedPlatform]) {
+    activePlatformId = savedPlatform;
+  }
+} catch (e) {
+  // Ignore
+}
+renderSelectedPlatform();
+
 autoVerifyOnBoot();
 
 document.addEventListener('visibilitychange', () => {
@@ -2115,6 +2247,10 @@ document.addEventListener('visibilitychange', () => {
   playGame,
   closeGame,
   copyInviteCode,
+  selectPlatform,
+  playActivePlatform,
+  copyActivePlatformCode,
+  GAME_PLATFORMS,
   toggleGameUI,
   selectMode,
   toggleEngine,
