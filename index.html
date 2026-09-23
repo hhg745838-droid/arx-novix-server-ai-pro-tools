@@ -4,9 +4,9 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
 <title>ARX TM NOVIX PRO AI — B3.9</title>
-<meta name="description" content="ARX TM NOVIX PRO AI - 3-4 Level Fix Winning Recovery Mod, Low Confidence Auto-Skip System, and Matrix Probability Engine." />
+<meta name="description" content="ARX TM NOVIX PRO AI - 3-4 Level Fix Winning Recovery Mod, Real-Time Prediction Engine, and Matrix Probability Dashboard." />
 <meta property="og:title" content="ARX TM NOVIX PRO AI — B3.9" />
-<meta property="og:description" content="ARX TM NOVIX PRO AI - 3-4 Level Fix Winning Recovery Mod, Low Confidence Auto-Skip System, and Matrix Probability Engine." />
+<meta property="og:description" content="ARX TM NOVIX PRO AI - 3-4 Level Fix Winning Recovery Mod, Real-Time Prediction Engine, and Matrix Probability Dashboard." />
 <meta name="theme-color" content="#ffffff" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -20,7 +20,7 @@
   --bg:#f3f6fc;--bg-2:#ebf0fa;--card:#ffffff;--card-solid:#ffffff;--card-2:#f7f9fd;
   --border:#0f183812;--border-strong:#0f183824;
   --shadow-sm:0 4px 14px rgba(18,24,41,0.06);--shadow-md:0 12px 32px rgba(18,24,41,0.09);--shadow-lg:0 24px 60px rgba(18,24,41,0.13);
-  --win:#10b981;--loss:#ef4444;--skip:#f59e0b;
+  --win:#10b981;--loss:#ef4444;
   --grad-primary:linear-gradient(135deg,#ff3358 0%,#d90d34 60%,#ff5e7d 100%);
   --grad-bg:radial-gradient(900px 500px at 50% -10%,rgba(230,30,67,0.12),transparent 65%),radial-gradient(700px 400px at 100% 25%,rgba(0,184,169,0.08),transparent 60%);
   --r-sm:10px;--r-md:14px;--r-lg:20px;--r-xl:26px;
@@ -80,6 +80,10 @@ body.ui-hidden .app{opacity:0;pointer-events:none}
 .tb-title{font-family:Orbitron,sans-serif;font-weight:900;font-size:13px;letter-spacing:1.2px;color:var(--primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tb-sub{font-size:8px;letter-spacing:1.2px;font-weight:700;color:var(--muted);margin-top:2px}
 .tb-right{display:flex;align-items:center;gap:6px;flex:none}
+.topbar-icon-btn, .sound-btn{width:34px;height:34px;border-radius:10px;background:var(--bg-2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--ink);transition:all .2s}
+.topbar-icon-btn:hover, .sound-btn:hover{background:rgba(230,30,67,0.1);border-color:var(--primary-border);color:var(--primary);transform:scale(1.04)}
+.topbar-icon-btn.active{background:var(--grad-primary);color:#fff;border-color:transparent;box-shadow:0 0 12px var(--primary-glow)}
+.topbar-icon-btn svg{width:16px;height:16px}
 .vip-badge{display:flex;align-items:center;gap:5px;padding:6px 10px;border-radius:10px;background:#0d111e;color:#ffd75e;border:1px solid rgba(245,180,10,0.3);font-family:Orbitron,sans-serif;font-size:8.5px;font-weight:900;letter-spacing:1px;cursor:pointer}
 .profile-btn{width:36px;height:36px;border-radius:50%;background:var(--bg-2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink)}
 .profile-btn svg{width:16px;height:16px}
@@ -90,7 +94,6 @@ body.ui-hidden .app{opacity:0;pointer-events:none}
 /* PHOTO HERO BRAND CARD */
 .brand-hero{position:relative;margin:8px 14px 4px;padding:10px 14px;border-radius:18px;background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow-sm);display:flex;align-items:center;justify-content:space-between;overflow:hidden}
 .bh-lion{width:56px;height:56px;border-radius:16px;background:radial-gradient(circle at 40% 40%,#ff3358,#110408);display:flex;align-items:center;justify-content:center;overflow:hidden;flex:none;box-shadow:0 8px 24px rgba(230,30,67,0.35);border:1.5px solid rgba(255,255,255,0.4)}
-.bh-lion img{width:100%;height:100%;object-fit:cover}
 .bh-center{flex:1;text-align:center;padding:0 8px}
 .bh-crown{width:20px;height:20px;fill:var(--primary);margin:0 auto 2px;display:block;filter:drop-shadow(0 2px 8px var(--primary-glow))}
 .bh-title{font-family:Orbitron,sans-serif;font-size:13.5px;font-weight:900;letter-spacing:1.2px;color:var(--primary)}
@@ -149,10 +152,10 @@ body.ui-hidden .app{opacity:0;pointer-events:none}
 .pred-hud{
   background:linear-gradient(180deg,var(--bg-2) 0%,var(--card) 100%);
   border:2px solid var(--primary-border);
-  border-radius:18px;
-  padding:12px 10px;
+  border-radius:20px;
+  padding:14px 12px;
   position:relative;
-  box-shadow:0 8px 30px rgba(230,30,67,0.12),inset 0 1px 0 rgba(255,255,255,0.7);
+  box-shadow:0 10px 36px rgba(230,30,67,0.14),inset 0 1px 0 rgba(255,255,255,0.7);
   margin-bottom:10px;
 }
 .hud-top{
@@ -160,8 +163,8 @@ body.ui-hidden .app{opacity:0;pointer-events:none}
   align-items:center;
   justify-content:space-between;
   gap:6px;
-  margin-bottom:10px;
-  padding-bottom:6px;
+  margin-bottom:12px;
+  padding-bottom:8px;
   border-bottom:1px dashed var(--border-strong);
 }
 .hud-period{
@@ -170,7 +173,7 @@ body.ui-hidden .app{opacity:0;pointer-events:none}
   font-weight:900;
   color:var(--ink);
   background:var(--card);
-  padding:4px 8px;
+  padding:5px 9px;
   border-radius:8px;
   border:1px solid var(--border);
   display:flex;
@@ -179,37 +182,75 @@ body.ui-hidden .app{opacity:0;pointer-events:none}
 }
 .hud-timer{
   font-family:'Orbitron',monospace;
-  font-size:14px;
+  font-size:15px;
   font-weight:900;
   color:var(--primary);
   background:rgba(230,30,67,0.08);
   border:1px solid var(--primary-border);
-  padding:3px 9px;
+  padding:4px 11px;
   border-radius:8px;
   letter-spacing:1.5px;
-  box-shadow:0 0 10px var(--primary-soft);
+  box-shadow:0 0 12px var(--primary-soft);
 }
 .hud-mode-pill{
   font-family:Orbitron;
   font-size:8px;
   font-weight:900;
-  padding:3px 7px;
+  padding:4px 9px;
   border-radius:6px;
   background:var(--card);
   border:1px solid var(--border);
   color:var(--muted);
 }
+.hud-mode-pill.lvl-2{
+  background:rgba(245,158,11,0.15);
+  color:#d97706;
+  border-color:rgba(245,158,11,0.4);
+}
+.hud-mode-pill.lvl-3{
+  background:rgba(230,30,67,0.18);
+  color:var(--primary);
+  border-color:var(--primary);
+  box-shadow:0 0 10px var(--primary-soft);
+}
+.hud-mode-pill.lvl-4{
+  background:linear-gradient(135deg,#ff3358,#8b0024);
+  color:#fff;
+  border-color:transparent;
+  box-shadow:0 0 14px rgba(230,30,67,0.6);
+}
+
+/* TACTICAL TARGET CYBER CORNERS */
 .hud-signal-box{
   text-align:center;
-  padding:14px 8px 12px;
-  border-radius:16px;
+  padding:16px 10px 14px;
+  border-radius:18px;
   background:var(--card);
   border:1.5px solid var(--border-strong);
   box-shadow:var(--shadow-md);
   position:relative;
+  overflow:hidden;
 }
+.hud-signal-box::before, .hud-signal-box::after{
+  content:"";
+  position:absolute;
+  width:12px;
+  height:12px;
+  pointer-events:none;
+}
+.hud-signal-box::before{
+  top:6px;left:6px;
+  border-top:2px solid var(--primary);
+  border-left:2px solid var(--primary);
+}
+.hud-signal-box::after{
+  bottom:6px;right:6px;
+  border-bottom:2px solid var(--primary);
+  border-right:2px solid var(--primary);
+}
+
 .hud-signal-tag{
-  font-size:8.5px;
+  font-size:9px;
   font-weight:900;
   letter-spacing:2px;
   color:var(--muted);
@@ -217,7 +258,7 @@ body.ui-hidden .app{opacity:0;pointer-events:none}
   margin-bottom:4px;
 }
 .hud-pred-text{
-  font-size:54px;
+  font-size:56px;
   line-height:1.05;
   font-weight:900;
   letter-spacing:3px;
@@ -226,31 +267,26 @@ body.ui-hidden .app{opacity:0;pointer-events:none}
 }
 .hud-pred-text.big{
   color:#f59e0b;
-  text-shadow:0 0 25px rgba(245,158,11,0.5),0 2px 4px rgba(0,0,0,0.15);
+  text-shadow:0 0 25px rgba(245,158,11,0.55),0 0 50px rgba(245,158,11,0.25),0 2px 4px rgba(0,0,0,0.15);
 }
 .hud-pred-text.small{
   color:#0284c7;
-  text-shadow:0 0 25px rgba(2,132,199,0.5),0 2px 4px rgba(0,0,0,0.15);
-}
-.hud-pred-text.skip{
-  color:#d97706;
-  font-size:42px;
-  text-shadow:0 0 20px rgba(217,119,6,0.4);
+  text-shadow:0 0 25px rgba(2,132,199,0.55),0 0 50px rgba(2,132,199,0.25),0 2px 4px rgba(0,0,0,0.15);
 }
 .hud-pred-text.ready{
   color:var(--primary);
-  font-size:36px;
+  font-size:38px;
 }
 .hud-pred-text.locked{
   color:var(--muted);
-  font-size:36px;
+  font-size:38px;
 }
 .hud-conf-badge{
   display:inline-flex;
   align-items:center;
   gap:5px;
-  margin-top:8px;
-  padding:4px 12px;
+  margin-top:10px;
+  padding:5px 14px;
   border-radius:999px;
   font-size:9.5px;
   font-weight:900;
@@ -261,11 +297,18 @@ body.ui-hidden .app{opacity:0;pointer-events:none}
   color:var(--win);
   border:1px solid rgba(16,185,129,0.3);
 }
-.hud-conf-badge.skip{
-  background:rgba(245,158,11,0.12);
-  color:#d97706;
-  border:1px solid rgba(245,158,11,0.3);
+.hud-conf-badge.fix-hot{
+  background:linear-gradient(135deg,rgba(230,30,67,0.18),rgba(245,158,11,0.18));
+  color:var(--primary);
+  border:1.5px solid var(--primary);
+  box-shadow:0 0 12px var(--primary-glow);
+  animation:fixGlow 1.8s infinite alternate;
 }
+@keyframes fixGlow{
+  0%{transform:scale(1);box-shadow:0 0 8px var(--primary-soft)}
+  100%{transform:scale(1.03);box-shadow:0 0 18px var(--primary-glow)}
+}
+
 .hud-numbers-row{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -277,20 +320,19 @@ body.ui-hidden .app{opacity:0;pointer-events:none}
   align-items:center;
   justify-content:center;
   gap:10px;
-  padding:9px;
+  padding:10px;
   background:var(--card);
   border:1px solid var(--border);
   border-radius:12px;
   box-shadow:var(--shadow-sm);
 }
 .hud-nb-box b{
-  font-size:28px;
+  font-size:30px;
   font-weight:900;
   line-height:1;
 }
-.hud-nb-box.big b{color:#f59e0b;text-shadow:0 0 12px rgba(245,158,11,0.35)}
-.hud-nb-box.small b{color:#0284c7;text-shadow:0 0 12px rgba(2,132,199,0.35)}
-.hud-nb-box.skip b{color:#d97706;font-size:18px}
+.hud-nb-box.big b{color:#f59e0b;text-shadow:0 0 14px rgba(245,158,11,0.4)}
+.hud-nb-box.small b{color:#0284c7;text-shadow:0 0 14px rgba(2,132,199,0.4)}
 .hud-nb-box span{
   font-size:8px;
   font-weight:900;
@@ -313,12 +355,12 @@ body.ui-hidden .app{opacity:0;pointer-events:none}
   align-items:center;
   justify-content:center;
   gap:6px;
-  padding:8px 6px;
+  padding:9px 8px;
   border-radius:10px;
   background:var(--card);
   border:1px solid var(--border-strong);
   font-family:Orbitron;
-  font-size:8.5px;
+  font-size:9px;
   font-weight:900;
   color:var(--ink);
   cursor:pointer;
@@ -331,32 +373,288 @@ body.ui-hidden .app{opacity:0;pointer-events:none}
   border-color:transparent;
   transform:translateY(-1px);
 }
-.hud-game-btn.tigro{border-left:3px solid #f59e0b}
-.hud-game-btn.dkwin{border-left:3px solid #8b5cf6}
+.hud-game-btn.tigro{border-left:4px solid #f59e0b}
+.hud-game-btn.dkwin{border-left:4px solid #8b5cf6}
 
-/* CIRCULAR STAGE (FROM PHOTO) */
-.avatar-stage{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 0 6px;position:relative}
-.avatar-ring{position:relative;width:116px;height:116px;border-radius:50%;background:var(--card);border:2px solid rgba(230,30,67,0.3);box-shadow:0 0 35px rgba(230,30,67,0.22),inset 0 0 16px rgba(230,30,67,0.1);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .3s}
-.avatar-ring:hover{transform:scale(1.03)}
-.avatar-halo{position:absolute;inset:-8px;border-radius:50%;border:1px dashed rgba(230,30,67,0.4);animation:spin 24s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.avatar-in{width:88px;height:88px;border-radius:50%;background:var(--bg-2);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;overflow:hidden;border:1px solid var(--border)}
-.avatar-name{font-family:Orbitron;font-size:11.5px;font-weight:900;color:var(--primary);letter-spacing:1px;margin-top:8px}
-.avatar-tag{font-size:7.5px;font-weight:900;letter-spacing:1.4px;color:var(--muted);margin-top:2px}
-
-/* 3-4 LEVEL FIX RECOVERY WIDGET */
-.recovery-panel{background:var(--bg-2);border:1px solid var(--border);border-radius:14px;padding:10px;margin-top:8px}
+/* 2-3 LEVEL FIX RECOVERY WIDGET */
+.recovery-panel{background:var(--bg-2);border:1px solid var(--border);border-radius:14px;padding:12px 10px;margin-top:10px}
 .rp-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 .rp-title{display:flex;align-items:center;gap:6px;font-family:Orbitron;font-size:9.5px;font-weight:900;letter-spacing:.8px;color:var(--ink)}
-.rec-badge{padding:3px 8px;border-radius:6px;font-family:Orbitron;font-size:8px;font-weight:900;letter-spacing:1px}
+.rec-badge{padding:4px 10px;border-radius:8px;font-family:Orbitron;font-size:8.5px;font-weight:900;letter-spacing:1px}
 .rec-badge.lvl-1{background:rgba(16,185,129,0.15);color:var(--win);border:1px solid rgba(16,185,129,0.3)}
 .rec-badge.lvl-2{background:rgba(245,158,11,0.18);color:#d97706;border:1px solid rgba(245,158,11,0.35)}
-.rec-badge.lvl-3{background:rgba(230,30,67,0.15);color:var(--primary);border:1px solid rgba(230,30,67,0.35)}
-.rec-badge.lvl-4{background:linear-gradient(135deg,#ff3358,#8b0024);color:#fff}
-.rec-pills{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
-.rec-pill{padding:7px 2px;border-radius:8px;background:var(--card);border:1px solid var(--border);text-align:center;font-family:Orbitron;font-size:8px;font-weight:900;color:var(--ink-soft);cursor:pointer;transition:all .2s}
-.rec-pill.active{background:var(--primary);color:#fff;border-color:transparent;box-shadow:0 3px 10px var(--primary-soft)}
-.rp-sub{margin-top:8px;font-size:8px;color:var(--muted);line-height:1.4}
+.rec-badge.lvl-3{background:linear-gradient(135deg,#ff3358,#8b0024);color:#fff;box-shadow:0 0 10px rgba(230,30,67,0.35)}
+.rec-pills{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.rec-pill{padding:9px 4px;border-radius:10px;background:var(--card);border:1.5px solid var(--border);text-align:center;font-family:Orbitron;font-size:8.5px;font-weight:900;color:var(--ink-soft);cursor:pointer;transition:all .2s}
+.rec-pill.active{background:var(--grad-primary);color:#fff;border-color:transparent;box-shadow:0 4px 14px var(--primary-soft)}
+.rp-sub{margin-top:8px;font-size:8.5px;color:var(--muted);line-height:1.4}
+.rp-sync-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.rp-sync-btn{padding:8px 6px;border-radius:10px;font-family:Orbitron;font-size:8.5px;font-weight:900;border:none;cursor:pointer;transition:all .2s;text-align:center}
+.rp-sync-btn.win{background:var(--grad-win);color:#fff;box-shadow:0 3px 10px rgba(16,185,129,0.3)}
+.rp-sync-btn.loss{background:linear-gradient(135deg,#ef4444,#991b1b);color:#fff;box-shadow:0 3px 10px rgba(239,68,68,0.3)}
+.rp-sync-btn:hover{transform:scale(1.02)}
+
+/* MOBILE NAV PILLS */
+.mobile-nav-pills{display:flex;gap:5px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none}
+.mobile-nav-pills::-webkit-scrollbar{display:none}
+.mnp-btn{flex:none;padding:7px 11px;border-radius:10px;background:var(--card);border:1px solid var(--border);color:var(--muted);font-family:Orbitron;font-size:8px;font-weight:900;letter-spacing:.8px;cursor:pointer;transition:all .2s;white-space:nowrap}
+.mnp-btn.active{background:var(--grad-primary);color:#fff;border-color:transparent;box-shadow:0 3px 12px var(--primary-soft)}
+
+/* RESPONSIVE MOBILE OPTIMIZATION */
+@media (max-width: 680px) {
+  body:not(.desktop-mode) .app{max-width:100vw;height:100dvh}
+  body:not(.desktop-mode) .left-sidebar{display:none !important}
+  body:not(.desktop-mode) .main-layout{display:block !important;padding:0 8px 84px !important}
+  body:not(.desktop-mode) .content-col{width:100% !important;min-width:100% !important}
+  .topbar{padding:8px 10px}
+  .brand-hero{margin:4px 8px 4px;padding:8px 10px}
+  .colour-bar{margin:0 8px 6px;padding:5px 8px}
+  .hud-pred-text{font-size:56px}
+  .hud-nb-box b{font-size:26px}
+  body:not(.desktop-mode) .bnav{bottom:calc(6px + env(safe-area-inset-bottom));width:calc(100% - 16px);padding:4px}
+  .nitem{padding:6px 2px}
+  .nitem span{font-size:7px}
+}
+
+/* ======================================================== */
+/* DESKTOP MODE & FULL SCREEN VIEW SYSTEM                  */
+/* ======================================================== */
+body.desktop-mode .app, .app.desktop-mode {
+  max-width: 1420px !important;
+  width: 98vw;
+  box-shadow: 0 14px 50px rgba(0,0,0,0.2);
+  border-left: 1.5px solid var(--border);
+  border-right: 1.5px solid var(--border);
+  border-radius: 20px;
+  margin: 10px auto;
+  height: calc(100dvh - 20px);
+}
+
+body.fullscreen-active .app {
+  border-radius: 0 !important;
+  margin: 0 !important;
+  height: 100vh !important;
+  max-width: 100vw !important;
+  width: 100vw !important;
+  border: none !important;
+}
+
+body.desktop-mode .main-layout {
+  display: flex !important;
+  gap: 16px !important;
+  padding: 0 16px 24px !important;
+}
+
+body.desktop-mode .left-sidebar {
+  display: flex !important;
+  width: 110px !important;
+  gap: 8px !important;
+}
+
+body.desktop-mode .sb-item {
+  padding: 12px 6px !important;
+  gap: 6px !important;
+}
+
+body.desktop-mode .sb-item svg {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+body.desktop-mode .sb-item span {
+  font-size: 8px !important;
+  letter-spacing: .8px !important;
+}
+
+/* DESKTOP 2-COLUMN PRO DASHBOARD LAYOUT FOR LIVE HUD VIEW */
+body.desktop-mode #tab-home.active {
+  display: grid !important;
+  grid-template-columns: 1.15fr 1fr !important;
+  gap: 16px !important;
+  align-items: start !important;
+}
+
+body.desktop-mode #tab-home > .card:first-of-type {
+  grid-column: 1;
+}
+
+body.desktop-mode #tab-home > .engine-master-box {
+  grid-column: 1;
+}
+
+body.desktop-mode #tab-home > .recovery-panel {
+  grid-column: 1;
+}
+
+body.desktop-mode #tab-home > .deep-mkt-card {
+  grid-column: 2;
+}
+
+body.desktop-mode #tab-home > .card:nth-of-type(2),
+body.desktop-mode #tab-home > .action-cards,
+body.desktop-mode #tab-home > .play-smart-bar,
+body.desktop-mode #tab-home > .ps-footer-txt {
+  grid-column: 2;
+}
+
+body.desktop-mode .bnav {
+  display: none !important;
+}
+
+body.desktop-mode .mobile-nav-pills {
+  display: none !important;
+}
+
+/* ======================================================== */
+/* DEEP LIVE 10-RESULT PATTERN MARKET ANALYSIS              */
+/* ======================================================== */
+.deep-mkt-card {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  padding: 12px;
+  margin-top: 10px;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+.deep-mkt-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 3px;
+  background: var(--grad-primary);
+}
+.dm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.dm-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: Orbitron, sans-serif;
+  font-size: 10px;
+  font-weight: 900;
+  color: var(--primary);
+  letter-spacing: 0.8px;
+}
+.dm-badge {
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: rgba(230,30,67,0.1);
+  border: 1px solid var(--primary-border);
+  font-family: Orbitron;
+  font-size: 8px;
+  font-weight: 900;
+  color: var(--primary);
+}
+
+/* 10-RESULT BEAD ROAD STRIP */
+.dm-beads-wrap {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 4px;
+  margin-bottom: 10px;
+}
+.dm-bead {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 5px 1px;
+  border-radius: 8px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  font-family: Orbitron;
+  transition: all .2s;
+  position: relative;
+}
+.dm-bead.latest {
+  border-color: var(--primary);
+  box-shadow: 0 0 10px var(--primary-soft);
+  transform: translateY(-2px);
+  background: var(--card-solid);
+}
+.dm-bead-period {
+  font-size: 6.5px;
+  color: var(--muted);
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.dm-bead-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10.5px;
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 3px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+.dm-bead-num.red { background: linear-gradient(135deg, #ef4444, #b91c1c); }
+.dm-bead-num.green { background: linear-gradient(135deg, #10b981, #047857); }
+.dm-bead-num.violet { background: linear-gradient(135deg, #a855f7, #6d28d9); }
+.dm-bead-type {
+  font-size: 7px;
+  font-weight: 900;
+}
+.dm-bead-type.big { color: #f59e0b; }
+.dm-bead-type.small { color: #0284c7; }
+
+/* MARKET DOMINANCE & METRICS GRID */
+.dm-metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.dm-metric-box {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px 8px;
+}
+.dm-mb-label {
+  font-size: 7px;
+  font-weight: 900;
+  color: var(--muted);
+  letter-spacing: 0.6px;
+  display: flex;
+  justify-content: space-between;
+}
+.dm-mb-val {
+  font-family: Orbitron;
+  font-size: 10.5px;
+  font-weight: 900;
+  color: var(--ink);
+  margin-top: 2px;
+}
+
+/* DEEP ACTION ADVICE BANNER */
+.dm-advice-bar {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 10px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 8.5px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.dm-advice-bar.warning {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.25);
+}
+.dm-advice-bar.hot {
+  background: rgba(230, 30, 67, 0.08);
+  border-color: rgba(230, 30, 67, 0.25);
+}
 
 /* VOTES & STATS DUAL */
 .vote-bar{height:16px;border-radius:8px;display:flex;overflow:hidden;background:var(--bg-2);border:1px solid var(--border);margin-top:4px}
@@ -371,7 +669,7 @@ body.ui-hidden .app{opacity:0;pointer-events:none}
 .pd .bar i{display:block;height:100%;border-radius:2px}
 .pd.big .bar i{background:#f59e0b}.pd.small .bar i{background:#0284c7}
 
-/* PERFORMANCE STATS TABLE (EXACT FROM PHOTO) */
+/* PERFORMANCE STATS TABLE */
 .stats-table{width:100%;border-collapse:collapse;margin-top:4px}
 .stats-table tr{border-bottom:1px solid var(--border)}
 .stats-table tr:last-child{border-bottom:none}
@@ -384,12 +682,89 @@ body.ui-hidden .app{opacity:0;pointer-events:none}
 
 /* TIMER & START CONTROLS */
 .ctrl-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
-.mode-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px;border-radius:12px;background:var(--bg-2);border:1px solid var(--border);font-family:Orbitron;font-size:9.5px;font-weight:900;color:var(--ink-soft);cursor:pointer;transition:all .2s}
+.mode-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px;border-radius:12px;background:var(--bg-2);border:1.5px solid var(--border);font-family:Orbitron;font-size:9.5px;font-weight:900;color:var(--ink-soft);cursor:pointer;transition:all .2s}
 .mode-btn svg{width:14px;height:14px}
-.mode-btn.on{background:var(--primary);color:#fff;border-color:transparent;box-shadow:0 4px 14px var(--primary-soft)}
-.start-btn{width:100%;padding:13px;border-radius:14px;background:var(--grad-primary);color:#fff;border:none;font-family:Orbitron;font-size:11px;font-weight:900;letter-spacing:1.5px;cursor:pointer;box-shadow:0 6px 20px var(--primary-glow);transition:transform .2s}
-.start-btn:hover{transform:translateY(-1px)}
-.start-btn.stop{background:linear-gradient(135deg,#374151,#111827);box-shadow:none}
+.mode-btn.on{background:var(--grad-primary);color:#fff;border-color:transparent;box-shadow:0 4px 14px var(--primary-soft)}
+
+/* ENGINE MASTER CONTROLLER (TOP PROMINENCE) */
+.engine-master-box{
+  background:var(--card-solid);
+  border:2px solid var(--primary-border);
+  border-radius:16px;
+  padding:12px 10px;
+  margin-top:10px;
+  box-shadow:0 6px 20px var(--primary-soft);
+}
+.emb-timer-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+
+.start-btn{
+  width:100%;
+  padding:14px 12px;
+  border-radius:14px;
+  background:var(--grad-primary);
+  color:#fff;
+  border:none;
+  font-family:Orbitron;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:1.5px;
+  cursor:pointer;
+  box-shadow:0 6px 22px var(--primary-glow);
+  transition:all .25s ease;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+}
+.start-btn:hover{transform:translateY(-1px);filter:brightness(1.08)}
+.start-btn:active{transform:scale(0.98)}
+.start-btn.stop{
+  background:linear-gradient(135deg,#dc2626,#991b1b);
+  box-shadow:0 6px 22px rgba(220,38,38,0.5);
+}
+.start-btn.running{
+  animation:pulseEngineShadow 1.8s infinite ease-in-out;
+}
+@keyframes pulseEngineShadow{
+  0%, 100% { box-shadow:0 0 16px rgba(220,38,38,0.5); }
+  50% { box-shadow:0 0 28px rgba(220,38,38,0.9); }
+}
+
+.pulse-dot{
+  display:inline-block;
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#fff;
+  animation:pulseDot 1.2s infinite;
+}
+@keyframes pulseDot{
+  0%, 100% { transform:scale(1); opacity:1; }
+  50% { transform:scale(1.4); opacity:0.6; }
+}
+
+.ch-quick-start{
+  padding:5px 11px;
+  border-radius:8px;
+  background:var(--grad-primary);
+  color:#fff;
+  border:none;
+  font-family:Orbitron;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.8px;
+  cursor:pointer;
+  transition:all .2s;
+  display:flex;
+  align-items:center;
+  gap:4px;
+  box-shadow:0 2px 10px var(--primary-soft);
+}
+.ch-quick-start:hover{filter:brightness(1.1)}
+.ch-quick-start.stop{
+  background:linear-gradient(135deg,#dc2626,#991b1b);
+  box-shadow:0 2px 10px rgba(220,38,38,0.4);
+}
 
 /* 3 ACTION CARDS FROM PHOTO */
 .action-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px}
@@ -412,6 +787,8 @@ body.ui-hidden .app{opacity:0;pointer-events:none}
 .rec-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
 .rec-col{background:var(--card-solid);border:1px solid var(--border);border-radius:12px;padding:10px 4px;text-align:center;cursor:pointer;transition:all .2s}
 .rec-col.active{border-color:var(--primary);box-shadow:0 0 14px var(--primary-soft);background:rgba(230,30,67,0.06)}
+.rec-col.fix-hot{border-color:#f59e0b;background:rgba(245,158,11,0.06)}
+.rec-col.active.fix-hot{border-color:var(--primary);box-shadow:0 0 18px rgba(230,30,67,0.4);background:rgba(230,30,67,0.12)}
 .rc-lvl{font-size:8px;font-weight:900;color:var(--muted);letter-spacing:.8px}
 .rc-mult{font-family:Orbitron;font-size:16px;font-weight:900;color:var(--primary);margin-top:2px}
 .rc-bet{font-size:9px;font-weight:800;color:var(--ink);margin-top:2px}
@@ -423,23 +800,21 @@ body.ui-hidden .app{opacity:0;pointer-events:none}
 /* HISTORY CARDS */
 .hitem{display:flex;gap:8px;padding:10px;border-radius:14px;background:var(--card);border:1px solid var(--border);margin-bottom:8px;position:relative;overflow:hidden;box-shadow:var(--shadow-sm)}
 .hitem:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--win)}
-.hitem.loss:before{background:var(--loss)}.hitem.skip:before{background:var(--skip)}
+.hitem.loss:before{background:var(--loss)}
 .hitem .st{width:42px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-radius:10px;background:rgba(16,185,129,0.12)}
 .hitem.loss .st{background:rgba(239,68,68,0.12)}
-.hitem.skip .st{background:rgba(245,158,11,0.12)}
 .hitem .st .ic{width:24px;height:24px;border-radius:8px;background:var(--win);display:flex;align-items:center;justify-content:center;color:#fff}
 .hitem.loss .st .ic{background:var(--loss)}
-.hitem.skip .st .ic{background:var(--skip)}
 .hitem .st .ic svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:3}
 .hitem .st .l{font-size:7.5px;font-weight:900;letter-spacing:.8px;color:var(--win)}
 .hitem.loss .st .l{color:var(--loss)}
-.hitem.skip .st .l{color:var(--skip)}
 .hbody{flex:1;min-width:0}
 .htop{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .htop .per{font-family:JetBrains Mono,monospace;font-size:10.5px;font-weight:700;color:var(--ink)}
 .htop .mc{font-size:7.5px;font-weight:900;padding:2px 6px;border-radius:999px;background:var(--bg-2);border:1px solid var(--border);color:var(--muted)}
 .tag-rec{font-size:7.5px;font-weight:900;padding:2px 6px;border-radius:6px;background:rgba(230,30,67,0.1);color:var(--primary);border:1px solid rgba(230,30,67,0.25)}
-.tag-skip{font-size:7.5px;font-weight:900;padding:2px 6px;border-radius:6px;background:rgba(245,158,11,0.15);color:#b45309;border:1px solid rgba(245,158,11,0.3)}
+.tag-rec.high-fix{background:linear-gradient(135deg,#ff3358,#8b0024);color:#fff;border-color:transparent}
+.tag-reversed{font-size:7.5px;font-weight:900;padding:2px 6px;border-radius:6px;background:rgba(139,92,246,0.15);color:#7c3aed;border:1px solid rgba(139,92,246,0.3)}
 .hvs{display:flex;align-items:center;gap:6px;margin-top:6px}
 .hside{flex:1;padding:6px 8px;border-radius:8px;background:var(--bg-2);border:1px solid var(--border)}
 .hside .sk{font-size:7px;letter-spacing:1px;font-weight:900;color:var(--muted)}
@@ -519,50 +894,84 @@ body.ui-hidden .app{opacity:0;pointer-events:none}
 .bg-bar i{display:block;height:100%;border-radius:2px;background:var(--primary)}
 .om-card{background:var(--bg-2);border:1px solid var(--border);border-radius:12px;padding:10px}
 .om-row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.om-box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 4px;text-align:center}
-.om-box .k{font-size:7px;font-weight:900;color:var(--muted)}
-.om-box .v{font-family:Orbitron;font-size:11px;font-weight:900;color:var(--ink);margin-top:2px}
-.matrix-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.matrix-cell{background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:8px;text-align:center}
-.matrix-cell .m-k{font-size:7.5px;font-family:JetBrains Mono;color:var(--muted)}
-.matrix-cell .m-v{font-family:Orbitron;font-size:14px;font-weight:900;color:var(--primary);margin-top:2px}
-.digit-bars{display:flex;align-items:flex-end;justify-content:space-between;gap:3px;height:100px;padding:10px 4px 2px;background:var(--bg-2);border:1px solid var(--border);border-radius:12px}
-.digit-col{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;gap:3px}
-.d-bar-track{width:100%;max-width:14px;height:60px;display:flex;align-items:flex-end;background:rgba(0,0,0,0.05);border-radius:3px;overflow:hidden}
+.om-box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px;text-align:center}
+.om-box .k{font-size:6.5px;font-weight:900;color:var(--muted);letter-spacing:.6px}
+.om-box .v{font-family:Orbitron;font-size:10.5px;font-weight:900;color:var(--ink);margin-top:2px}
+.om-alert{margin-top:8px;padding:8px 10px;border-radius:8px;font-size:8px;line-height:1.4;display:flex;flex-direction:column;gap:2px}
+.om-alert.danger{background:rgba(239,68,68,0.1);border:1px solid var(--loss);color:var(--loss)}
+.om-alert.safe{background:rgba(16,185,129,0.1);border:1px solid var(--win);color:var(--win)}
+.op-banner{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;margin-bottom:8px;font-size:8px;font-weight:800}
+.op-banner.normal{background:rgba(0,184,169,0.08);border:1px solid rgba(0,184,169,0.25);color:var(--accent-2)}
+.op-banner.reversed{background:rgba(239,68,68,0.1);border:1px solid var(--loss);color:var(--loss)}
+.op-banner.fix-alert{background:linear-gradient(90deg,rgba(230,30,67,0.15),rgba(245,158,11,0.15));border:1.5px solid var(--primary);color:var(--primary);box-shadow:0 0 12px var(--primary-soft)}
+.op-tag{padding:2px 6px;border-radius:4px;background:var(--card);font-family:Orbitron;font-size:7px;font-weight:900;flex:none}
+.op-tag.fix-tag{background:var(--primary);color:#fff}
+.matrix-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.matrix-cell{background:var(--bg-2);border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center}
+.matrix-cell .m-k{font-size:7.5px;font-weight:900;color:var(--muted)}
+.matrix-cell .m-v{font-family:Orbitron;font-size:13px;font-weight:900;color:var(--primary);margin-top:2px}
+.matrix-footer{display:flex;justify-content:space-between;margin-top:8px;font-size:8px;color:var(--muted)}
+.digit-bars{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-top:8px;align-items:flex-end}
+.digit-col{display:flex;flex-direction:column;align-items:center;gap:2px}
+.d-bar-track{width:100%;height:60px;background:var(--bg-2);border-radius:4px;display:flex;align-items:flex-end;overflow:hidden;padding:1px}
 .d-bar-fill{width:100%;border-radius:3px}
 .d-bar-fill.big{background:#f59e0b}.d-bar-fill.small{background:#0284c7}
 .d-num{font-family:Orbitron;font-size:9px;font-weight:900}
-.d-pct{font-size:7px;color:var(--muted);font-family:JetBrains Mono}
+.d-num.big{color:#f59e0b}.d-num.small{color:#0284c7}
+.d-pct{font-size:6.5px;font-weight:800;color:var(--muted)}
+.digit-col.prime .d-num{color:var(--primary);font-size:11px;font-weight:900}
+.digit-col.prime .d-bar-fill{background:var(--primary)}
+.algo-grid{display:flex;flex-direction:column;gap:4px;margin-top:8px}
+.algo-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;background:var(--bg-2);border:1px solid var(--border);font-size:8px}
+.algo-item .idx{font-family:JetBrains Mono;font-size:7.5px;color:var(--muted);width:14px}
+.algo-item .nm{flex:1;font-weight:800;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.algo-item .vote{padding:2px 6px;border-radius:4px;font-family:Orbitron;font-weight:900;font-size:8px}
+.algo-item .vote.B{background:#f59e0b22;color:#d97706}
+.algo-item .vote.S{background:#0284c722;color:#0284c7}
+.algo-item .prob{font-family:JetBrains Mono;font-size:7.5px;color:var(--muted)}
 .theme-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.sw{aspect-ratio:1;border-radius:12px;position:relative;cursor:pointer;border:2px solid transparent;overflow:hidden}
-.sw.sel{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-soft)}
-.sw .nm{position:absolute;left:0;right:0;bottom:0;padding:3px;font-size:6.5px;font-weight:900;text-align:center;background:rgba(0,0,0,0.6);color:#fff}
-.sw .ck{position:absolute;top:4px;right:4px;width:14px;height:14px;border-radius:50%;background:#fff;display:none;align-items:center;justify-content:center}
-.sw.sel .ck{display:flex}
-.sw .ck svg{width:8px;height:8px;stroke:#000;stroke-width:3;fill:none}
+.theme-grid .sw{height:54px;border-radius:10px;border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;position:relative}
+.theme-grid .sw.sel{border-color:var(--primary);box-shadow:0 0 10px var(--primary-soft)}
+.theme-grid .sw .ck{display:none;position:absolute;top:4px;right:4px;width:12px;height:12px;border-radius:50%;background:var(--primary);color:#fff;align-items:center;justify-content:center}
+.theme-grid .sw .ck svg{width:8px;height:8px;stroke:currentColor;fill:none;stroke-width:3}
+.theme-grid .sw.sel .ck{display:flex}
+.theme-grid .sw .nm{font-size:6.5px;font-weight:900;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.8);text-align:center}
+.empty{padding:24px 12px;text-align:center;color:var(--muted);font-size:9.5px}
+.empty b{display:block;font-size:12px;color:var(--ink);margin-bottom:4px}
+.card-t{display:flex;align-items:center;justify-content:space-between;font-family:Orbitron;font-size:11px;font-weight:900;color:var(--ink);letter-spacing:1px}
+.card-t .tag{font-size:7.5px;padding:2px 6px;border-radius:6px;background:var(--primary-soft);color:var(--primary)}
 </style>
 </head>
 <body>
-<div class="bg-fx"></div><div class="bg-grid"></div>
+<div class="bg-fx"></div>
+<div class="bg-grid"></div>
 
+<!-- FULLSCREEN GAME VIEW -->
 <div class="game-bg" id="gameBg">
-  <iframe id="webFrame" title="Game" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation allow-modals" allow="fullscreen; autoplay; clipboard-write"></iframe>
+  <iframe id="webFrame" src="about:blank"></iframe>
 </div>
 
 <div class="app">
-  <!-- TOPBAR MATCHING USER PHOTO -->
+  <!-- TOPBAR -->
   <header class="topbar">
-    <button class="menu-btn" onclick="window.__ARX.openDrawer()" aria-label="Menu">
+    <button class="menu-btn" onclick="window.__ARX.openDrawer()" aria-label="Open menu">
       <span></span><span></span><span></span>
     </button>
     <div class="tb-center">
       <div class="tb-title math-bold">𝐀𝐑𝐗 𝐓𝐌 𝐍𝐎𝐕𝐈𝐗 𝐏𝐑𝐎 𝐀𝐈</div>
-      <div class="tb-sub">AI PREDICTION ENGINE • B3.9</div>
+      <div class="tb-sub math-bold">𝟑-𝟒 𝐋𝐄𝐕𝐄𝐋 𝐅𝐈𝐗 𝐖𝐈𝐍𝐍𝐈𝐍𝐆 𝐌𝐎𝐃</div>
     </div>
     <div class="tb-right">
-      <div class="vip-badge" onclick="window.__ARX.openLock()" id="vipBadge">
-        <svg viewBox="0 0 24 24" width="12" height="12" fill="#ffd75e"><path d="M2 18h20l-2 3H4zM3 7l4 4 5-7 5 7 4-4-2 9H5z"/></svg>
-        <span>𝐕𝐈𝐏</span>
+      <button class="topbar-icon-btn" id="desktopModeBtn" onclick="window.__ARX.toggleDesktopMode()" title="Toggle Desktop Mode (Wide Screen)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      </button>
+      <button class="topbar-icon-btn" id="fullScreenBtn" onclick="window.__ARX.toggleFullScreen()" title="Toggle Full Screen System">
+        <svg id="fsIconExpand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+        <svg id="fsIconCompress" style="display:none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 14h6m0 0v6m0-6L3 21m17-7h-6m0 0v6m0-6l7 7M4 10h6m0 0V4m0 6L3 3m17 7h-6m0 0V4m0 6l7-7"/></svg>
+      </button>
+      <button class="sound-btn" onclick="window.__ARX.toggleSound()" id="soundToggleBtn" title="Sound Effects">🔊</button>
+      <div class="vip-badge math-bold" onclick="window.__ARX.openLock()" id="lockBtn">
+        <span>👑</span><span class="math-bold">𝐕𝐈𝐏</span>
       </div>
       <button class="profile-btn" onclick="window.__ARX.switchTab('profile')" aria-label="Profile">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>
@@ -570,103 +979,111 @@ body.ui-hidden .app{opacity:0;pointer-events:none}
     </div>
   </header>
 
-  <!-- SUBSTRIP MARQUEE FROM PHOTO -->
+  <!-- MARQUEE SUBSTRIP FROM PHOTO -->
   <div class="substrip math-bold">
-    𝐒𝐌𝐀𝐑𝐓 𝐀𝐍𝐀𝐋𝐘𝐒𝐈𝐒 • 𝐑𝐄𝐀𝐋 𝐑𝐄𝐒𝐔𝐋𝐓𝐒 • 𝐍𝐄𝐗𝐓 𝐋𝐄𝐕𝐄𝐋
+    👑 𝐀𝐑𝐗 𝐓𝐌 𝐍𝐎𝐕𝐈𝐗 𝐏𝐑𝐎 𝐀𝐈 • 𝟑-𝟒 𝐋𝐄𝐕𝐄𝐋 𝐅𝐈𝐗 𝐖𝐈𝐍𝐍𝐈𝐍𝐆 𝐄𝐍𝐆𝐈𝐍𝐄 • 𝟗𝟗.𝟔% 𝐂𝐄𝐑𝐓𝐀𝐈𝐍𝐓𝐘 👑
   </div>
 
-  <!-- BRAND HERO FROM PHOTO -->
+  <!-- HERO BRAND CARD FROM PHOTO -->
   <div class="brand-hero">
     <div class="bh-lion">
-      <img src="https://i.postimg.cc/sxB74TxX/file-00000000097c81f5abb566d8a5f9d2ff.png" alt="ARX Red Lion" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%23fff\'><path d=\'M12 2l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z\'/></svg>'">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
     </div>
     <div class="bh-center">
       <svg class="bh-crown" viewBox="0 0 24 24"><path d="M2 18h20l-2 3H4zM3 7l4 4 5-7 5 7 4-4-2 9H5z"/></svg>
       <div class="bh-title math-bold">𝐀𝐑𝐗 𝐓𝐌 𝐍𝐎𝐕𝐈𝐗 𝐏𝐑𝐎 𝐀𝐈</div>
-      <div class="bh-sub">- AI PREDICTION ENGINE -</div>
+      <div class="bh-sub math-bold">𝟑-𝟒 𝐋𝐄𝐕𝐄𝐋 𝐅𝐈𝐗 𝐖𝐈𝐍𝐍𝐈𝐍𝐆 𝐌𝐎𝐃</div>
     </div>
     <div class="bh-side">
-      <div class="bh-side-tag">Novix AI</div>
-      <div class="bh-side-sub">NEXT LEVEL</div>
+      <div class="bh-side-tag">Novix</div>
+      <div class="bh-side-sub math-bold">𝐏𝐑𝐎 𝐀𝐈</div>
     </div>
   </div>
 
-  <!-- COLOUR CONTROL BAR FROM PHOTO -->
+  <!-- COLOUR PALETTE BAR FROM PHOTO -->
   <div class="colour-bar">
-    <div class="cb-left">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10c0 3-2 5-4 5h-2a2 2 0 0 0-2 2c0 1.1-.9 2-2 2a10 10 0 0 1-10-10"/></svg>
-      <span class="math-bold">𝐂𝐎𝐋𝐎𝐔𝐑 𝐂𝐎𝐍𝐓𝐑𝐎𝐋</span>
+    <div class="cb-left math-bold">
+      <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <span class="math-bold">𝐂𝐎𝐋𝐎𝐔𝐑 𝐓𝐇𝐄𝐌𝐄</span>
     </div>
     <div class="cb-options">
-      <button class="cb-chip active math-bold" id="btnThWhite" onclick="window.__ARX.setTheme('white')">𝐖𝐇𝐈𝐓𝐄</button>
-      <button class="cb-chip math-bold" id="btnThRGB" onclick="window.__ARX.setTheme('crimson')">𝐑𝐆𝐁</button>
-      <button class="cb-chip math-bold" id="btnThGold" onclick="window.__ARX.setTheme('gold')">𝐆𝐎𝐋𝐃</button>
+      <div class="cb-chip math-bold active" onclick="window.__ARX.setTheme('white')">𝐖𝐇𝐈𝐓𝐄</div>
+      <div class="cb-chip math-bold" onclick="window.__ARX.setTheme('crimson')">𝐂𝐘𝐁𝐄𝐑</div>
+      <div class="cb-chip math-bold" onclick="window.__ARX.setTheme('gold')">𝐆𝐎𝐋𝐃</div>
+      <div class="cb-chip math-bold" onclick="window.__ARX.cycleNextTheme()">𝐌𝐎𝐑𝐄 ↻</div>
     </div>
   </div>
 
-  <!-- MAIN BODY LAYOUT WITH PHOTO LEFT SIDEBAR TOOLBAR -->
+  <!-- MAIN BODY LAYOUT -->
   <div class="main-layout">
     <!-- LEFT VERTICAL TOOLBAR FROM PHOTO -->
-    <nav class="left-sidebar" aria-label="Toolbar">
+    <aside class="left-sidebar">
       <div class="sb-item active" data-sidebar="live" onclick="window.__ARX.selectSidebar('live')">
-        <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        <span>LIVE PREDICTION</span>
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        <span class="math-bold">𝐋𝐈𝐕𝐄</span>
       </div>
       <div class="sb-item" data-sidebar="recovery" onclick="window.__ARX.selectSidebar('recovery')">
         <svg viewBox="0 0 24 24"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>
-        <span>RECOVERY 3-4L</span>
-      </div>
-      <div class="sb-item" data-sidebar="report" onclick="window.__ARX.selectSidebar('report')">
-        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-        <span>ANALYSIS REPORT</span>
-      </div>
-      <div class="sb-item" data-sidebar="chart" onclick="window.__ARX.selectSidebar('chart')">
-        <svg viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
-        <span>CHART TREND</span>
+        <span class="math-bold">𝟐-𝟑𝐋 𝐅𝐈𝐗</span>
       </div>
       <div class="sb-item" data-sidebar="engine" onclick="window.__ARX.selectSidebar('engine')">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        <span>AI ENGINE</span>
-      </div>
-      <div class="sb-item" data-sidebar="settings" onclick="window.__ARX.selectSidebar('settings')">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
-        <span>SETTINGS CONFIG</span>
+        <span class="math-bold">𝐄𝐍𝐆𝐈𝐍𝐄</span>
       </div>
       <div class="sb-item" data-sidebar="history" onclick="window.__ARX.selectSidebar('history')">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        <span>HISTORY RECORDS</span>
+        <span class="math-bold">𝐇𝐈𝐒𝐓𝐎𝐑𝐘</span>
       </div>
-    </nav>
+      <div class="sb-item" data-sidebar="chart" onclick="window.__ARX.selectSidebar('chart')">
+        <svg viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+        <span class="math-bold">𝐂𝐇𝐀𝐑𝐓</span>
+      </div>
+      <div class="sb-item" data-sidebar="report" onclick="window.__ARX.selectSidebar('report')">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span class="math-bold">𝐑𝐄𝐏𝐎𝐑𝐓</span>
+      </div>
+      <div class="sb-item" data-sidebar="settings" onclick="window.__ARX.selectSidebar('settings')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span class="math-bold">𝐒𝐄𝐓𝐓𝐈𝐍𝐆𝐒</span>
+      </div>
+    </aside>
 
-    <!-- MAIN SCROLLABLE CONTENT COLUMN -->
+    <!-- RIGHT CONTENT COLUMN -->
     <div class="content-col">
+      <!-- MOBILE QUICK NAVIGATION PILL BAR (1-TAP THUMB SWITCHING) -->
+      <div class="mobile-nav-pills">
+        <button class="mnp-btn active math-bold" data-tab="home" onclick="window.__ARX.switchTab('home')">🎯 𝐋𝐈𝐕𝐄 𝐇𝐔𝐃</button>
+        <button class="mnp-btn math-bold" data-tab="recovery" onclick="window.__ARX.switchTab('recovery')">🔥 𝟐-𝟑𝐋 𝐅𝐈𝐗</button>
+        <button class="mnp-btn math-bold" data-tab="engine" onclick="window.__ARX.switchTab('engine')">🧠 𝐌𝐀𝐓𝐑𝐈𝐗</button>
+        <button class="mnp-btn math-bold" data-tab="game" onclick="window.__ARX.switchTab('game')">🎮 𝐆𝐀𝐌𝐄𝐒</button>
+        <button class="mnp-btn math-bold" data-tab="history" onclick="window.__ARX.switchTab('history')">📜 𝐇𝐈𝐒𝐓𝐎𝐑𝐘</button>
+      </div>
 
-      <!-- HOME VIEW -->
+      <!-- HOME VIEW (LIVE PREDICTIONS) -->
       <div class="view active" id="tab-home">
         <div class="card">
-          <!-- CARD HEADER -->
           <div class="card-head">
             <div class="ch-left">
               <span class="ch-dot"></span>
-              <div class="ch-title math-bold">𝐋𝐈𝐕𝐄 𝐏𝐑𝐄𝐃𝐈𝐂𝐓𝐈𝐎𝐍<small class="math-bold">𝐀𝐑𝐗 𝐓𝐌 𝐍𝐎𝐕𝐈𝐗 𝐏𝐑𝐎 𝐀𝐈</small></div>
+              <div class="ch-title math-bold">
+                𝐖𝐈𝐍𝐆𝐎 𝐋𝐈𝐕𝐄 𝐏𝐑𝐄𝐃𝐈𝐂𝐓𝐈𝐎𝐍
+                <small class="math-bold">𝐀𝐑𝐗 𝐓𝐌 𝐍𝐎𝐕𝐈𝐗 𝐏𝐑𝐎 𝐀𝐈 𝐁𝟑.𝟗</small>
+              </div>
             </div>
             <div class="ch-badges">
-              <div class="badge-live"><span class="bl-dot"></span>𝐋𝐈𝐕𝐄</div>
-              <div class="badge-fast">+ 𝐅𝐀𝐒𝐓</div>
-              <button class="badge-icon" onclick="window.__ARX.toggleHidePred()" id="hideBtn" title="Privacy Eye">
+              <button class="ch-quick-start math-bold" id="topQuickStartBtn" onclick="window.__ARX.toggleEngine()" title="Start / Stop Engine">
+                ▶ 𝐒𝐓𝐀𝐑𝐓
+              </button>
+              <div class="badge-live"><span class="bl-dot"></span><span class="math-bold">𝐋𝐈𝐕𝐄</span></div>
+              <div class="badge-fast math-bold">𝟗𝟗% 𝐅𝐈𝐗</div>
+              <button class="badge-icon" onclick="window.__ARX.toggleHidePred()" title="Privacy Mode">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
               </button>
             </div>
           </div>
 
-          <!-- SUBHEAD WITH RED VERTICAL MARKER -->
-          <div class="section-bar">
-            <span class="sb-marker"></span>
-            <div class="sb-txt math-bold">𝐀𝐑𝐗 𝐓𝐌 𝐍𝐎𝐕𝐈𝐗 — 𝐏𝐑𝐄𝐃𝐈𝐂𝐓𝐈𝐎𝐍 𝐃𝐀𝐒𝐇𝐁𝐎𝐀𝐑𝐃</div>
-          </div>
-
           <!-- ======================================================== -->
-          <!-- ULTRA-PREMIUM HUD PREDICTION TERMINAL (HUGE & CLEAR) -->
+          <!-- ULTRA-PREMIUM HUD PREDICTION DASHBOARD (BIG, BOLD, CLEAR) -->
           <!-- ======================================================== -->
           <div class="pred-hud" id="stage">
             <div class="hud-top">
@@ -712,32 +1129,130 @@ body.ui-hidden .app{opacity:0;pointer-events:none}
             </div>
           </div>
 
+          <!-- ======================================================== -->
+          <!-- PROMINENT ENGINE CONTROLLER (VISIBLE IMMEDIATELY ON HUD)  -->
+          <!-- ======================================================== -->
+          <div class="engine-master-box">
+            <div class="emb-timer-row">
+              <button class="mode-btn btn-mode-30" id="hudBtn30" onclick="window.__ARX.selectMode('30s')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span class="math-bold">𝟑𝟎 𝐒𝐄𝐂</span>
+              </button>
+              <button class="mode-btn on btn-mode-1m" id="hudBtn1m" onclick="window.__ARX.selectMode('1m')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span class="math-bold">𝟏 𝐌𝐈𝐍</span>
+              </button>
+            </div>
+            <button class="start-btn engine-toggle-btn math-bold" id="hudStartBtn" onclick="window.__ARX.toggleEngine()">
+              ▶ 𝐒𝐓𝐀𝐑𝐓 𝐍𝐎𝐕𝐈𝐗 𝐄𝐍𝐆𝐈𝐍𝐄
+            </button>
+            <div style="display:flex;gap:6px;margin-top:8px">
+              <button class="gc-play math-bold" style="flex:1;background:var(--card);border:1px solid var(--border);color:var(--ink)" onclick="window.__ARX.runDemo()">
+                ⚡ 𝐓𝐄𝐒𝐓 𝐃𝐄𝐌𝐎
+              </button>
+              <button class="gc-play math-bold" style="flex:1;background:var(--card);border:1px solid var(--border);color:var(--ink)" onclick="window.__ARX.switchTab('recovery')">
+                🔥 𝟐-𝟑𝐋 𝐅𝐈𝐗 𝐏𝐀𝐍𝐄𝐋
+              </button>
+            </div>
+          </div>
+
           <!-- HIDDEN CIRCULAR STAGE COMPATIBILITY WRAPPER (FOR ENGINE EVENTS) -->
           <div style="display:none">
             <div id="core"><div id="corePred"></div><div id="coreNum"></div></div>
             <div id="coreRing"></div><div id="coreSub"></div>
           </div>
 
-          <!-- DYNAMIC ALERTS (OPPOSITE MAJORITY & AUTO-SKIP) -->
+          <!-- DYNAMIC ALERTS (OPPOSITE MAJORITY & FIX WINNING NOTIFICATIONS) -->
           <div id="oppositeBanner" class="op-banner" style="display:none"></div>
 
-          <!-- 3-4 LEVEL RECOVERY MOD LIVE WIDGET -->
+          <!-- 2-3 LEVEL RECOVERY MOD LIVE WIDGET -->
           <div class="recovery-panel">
             <div class="rp-head">
               <div class="rp-title">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                <span class="math-bold">𝟑-𝟒 𝐋𝐄𝐕𝐄𝐋 𝐅𝐈𝐗 𝐑𝐄𝐂𝐎𝐕𝐄𝐑𝐘 𝐌𝐎𝐃</span>
+                <span class="math-bold">𝟐-𝟑 𝐋𝐄𝐕𝐄𝐋 𝐅𝐈𝐗 𝐑𝐄𝐂𝐎𝐕𝐄𝐑𝐘 𝐌𝐎𝐃</span>
               </div>
               <span class="rec-badge lvl-1 math-bold" id="recoveryLvlBadge">𝐋𝐄𝐕𝐄𝐋 𝟏 (𝟏𝐗)</span>
             </div>
             <div class="rec-pills">
-              <div class="rec-pill active math-bold" id="recPill1" onclick="window.__ARX.manualSetRecoveryLevel(1)">𝐋𝟏 (𝟏𝐗)</div>
-              <div class="rec-pill math-bold" id="recPill2" onclick="window.__ARX.manualSetRecoveryLevel(2)">𝐋𝟐 (𝟑𝐗)</div>
-              <div class="rec-pill math-bold" id="recPill3" onclick="window.__ARX.manualSetRecoveryLevel(3)">𝐋𝟑 (𝟖𝐗)</div>
-              <div class="rec-pill math-bold" id="recPill4" onclick="window.__ARX.manualSetRecoveryLevel(4)">𝐋𝟒 (𝟐𝟒𝐗)</div>
+              <div class="rec-pill active math-bold" id="recPill1" onclick="window.__ARX.manualSetRecoveryLevel(1)">𝐋𝟏 (𝟏𝐗 𝐁𝐀𝐒𝐄)</div>
+              <div class="rec-pill math-bold" id="recPill2" onclick="window.__ARX.manualSetRecoveryLevel(2)">⚡ 𝐋𝟐 (𝟑𝐗 𝐅𝐈𝐗)</div>
+              <div class="rec-pill math-bold" id="recPill3" onclick="window.__ARX.manualSetRecoveryLevel(3)">🔥 𝐋𝟑 (𝟗𝐗 𝐒𝐔𝐏𝐄𝐑)</div>
             </div>
             <div class="rp-sub math-bold" id="recoveryDesc">
-              𝐁𝐀𝐒𝐄 𝐌𝐎𝐃𝐄 • 𝐁𝐄𝐓: ₹𝟏𝟎 • 𝐒𝐀𝐅𝐄 𝐀𝐔𝐓𝐎-𝐒𝐊𝐈𝐏 𝐀𝐂𝐓𝐈𝐕𝐄 (≥𝟕𝟒%)
+              𝐁𝐀𝐒𝐄 𝐌𝐎𝐃𝐄 • 𝐁𝐄𝐓: ₹𝟏𝟎 • 𝟐-𝟑 𝐋𝐄𝐕𝐄𝐋 𝐅𝐈𝐗 𝐖𝐈𝐍𝐍𝐈𝐍𝐆 𝐂𝐎𝐑𝐄 𝐀𝐂𝐓𝐈𝐕𝐄
+            </div>
+            <!-- MOBILE ROUND SYNC BUTTONS -->
+            <div class="rp-sync-row">
+              <button class="rp-sync-btn win math-bold" onclick="window.__ARX.manualWin()">✓ 𝐈 𝐖𝐎𝐍 (𝐑𝐄𝐒𝐄𝐓 𝐋𝟏)</button>
+              <button class="rp-sync-btn loss math-bold" onclick="window.__ARX.manualLoss()">✕ 𝐈 𝐋𝐎𝐒𝐓 (𝐒𝐓𝐄𝐏 𝟐-𝟑𝐋)</button>
+            </div>
+          </div>
+
+          <!-- ======================================================== -->
+          <!-- DEEP LIVE 10-RESULT PATTERN MARKET ANALYSIS              -->
+          <!-- ======================================================== -->
+          <div class="deep-mkt-card" id="deepMktCard">
+            <div class="dm-header">
+              <div class="dm-title">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+                <span class="math-bold">𝐃𝐄𝐄𝐏 𝐋𝐈𝐕𝐄 𝟏𝟎 𝐑𝐄𝐒𝐔𝐋𝐓 𝐏𝐀𝐓𝐓𝐄𝐑𝐍 𝐌𝐀𝐑𝐊𝐄𝐓</span>
+              </div>
+              <span class="dm-badge math-bold" id="dmRegimeBadge">⚡ 𝐂𝐇𝐎𝐏 𝐖𝐀𝐕𝐄</span>
+            </div>
+
+            <!-- LIVE 10-BEAD ROAD STRIP -->
+            <div class="dm-beads-wrap" id="dmBeadsWrap">
+              <!-- Dynamically populated 10 beads -->
+            </div>
+
+            <!-- MARKET METRICS DUAL GRID -->
+            <div class="dm-metrics-grid">
+              <div class="dm-metric-box">
+                <div class="dm-mb-label math-bold">
+                  <span>𝐁/𝐒 𝐃𝐎𝐌𝐈𝐍𝐀𝐍𝐂𝐄 (𝟏𝟎 𝐑𝐃𝐒)</span>
+                  <span id="dmDominanceVal" style="color:var(--primary)">—</span>
+                </div>
+                <div class="dm-mb-val math-bold" id="dmDominanceTxt">𝐁𝐈𝐆 𝟓𝟎% : 𝟓𝟎% 𝐒𝐌𝐀𝐋𝐋</div>
+              </div>
+              <div class="dm-metric-box">
+                <div class="dm-mb-label math-bold">
+                  <span>𝐀𝐂𝐓𝐈𝐕𝐄 𝐒𝐓𝐑𝐄𝐀𝐊</span>
+                  <span id="dmStreakType" style="color:var(--win)">—</span>
+                </div>
+                <div class="dm-mb-val math-bold" id="dmStreakTxt">—</div>
+              </div>
+              <div class="dm-metric-box">
+                <div class="dm-mb-label math-bold">
+                  <span>𝐂𝐎𝐋𝐎𝐔𝐑 𝐃𝐈𝐒𝐓𝐑𝐈𝐁𝐔𝐓𝐈𝐎𝐍</span>
+                  <span id="dmColorRatio" style="color:var(--ink-soft)">—</span>
+                </div>
+                <div class="dm-mb-val math-bold" id="dmColorTxt">🔴 𝟎  🟢 𝟎  🟣 𝟎</div>
+              </div>
+              <div class="dm-metric-box">
+                <div class="dm-mb-label math-bold">
+                  <span>𝐄𝐕𝐄𝐍 / 𝐎𝐃𝐃 𝐏𝐀𝐑𝐈𝐓𝐘</span>
+                  <span id="dmParityRatio" style="color:var(--ink-soft)">—</span>
+                </div>
+                <div class="dm-mb-val math-bold" id="dmParityTxt">⚖️ 𝐄𝐕𝐄𝐍 𝟓 : 𝟓 𝐎𝐃𝐃</div>
+              </div>
+            </div>
+
+            <!-- HISTORICAL 3-STEP PATTERN MATCH -->
+            <div class="dm-metric-box" style="margin-bottom:8px">
+              <div class="dm-mb-label math-bold">
+                <span>𝐇𝐈𝐒𝐓𝐎𝐑𝐈𝐂𝐀𝐋 𝟑-𝐒𝐓𝐄𝐏 𝐏𝐀𝐓𝐓𝐄𝐑𝐍 𝐌𝐀𝐓𝐂𝐇𝐄𝐑</span>
+                <span id="dmPatternWr" style="color:var(--win)">—</span>
+              </div>
+              <div style="font-size:8.5px;color:var(--ink);margin-top:3px;font-family:Inter;font-weight:700" id="dmPatternSubTxt">
+                Analyzing empirical pattern sequence...
+              </div>
+            </div>
+
+            <!-- AI TRADE ACTION RECOMMENDATION -->
+            <div class="dm-advice-bar math-bold" id="dmAdviceBar">
+              <span>🎯</span>
+              <span id="dmAdviceTxt">𝐀𝐈 𝐌𝐀𝐑𝐊𝐄𝐓 𝐀𝐃𝐕𝐈𝐂𝐄: 𝐑𝐄𝐀𝐃𝐈𝐍𝐆 𝐋𝐈𝐕𝐄 𝟏𝟎-𝐑𝐄𝐒𝐔𝐋𝐓 𝐌𝐀𝐑𝐊𝐄𝐓 𝐒𝐄𝐐𝐔𝐄𝐍𝐂𝐄...</span>
             </div>
           </div>
 
@@ -768,7 +1283,7 @@ body.ui-hidden .app{opacity:0;pointer-events:none}
             <tr><td class="lbl math-bold">𝐓𝐎𝐓𝐀𝐋 𝐏𝐑𝐄𝐃𝐈𝐂𝐓𝐈𝐎𝐍𝐒</td><td class="val math-bold" id="tblTotalPredictions">𝟎</td></tr>
             <tr><td class="lbl math-bold">𝐖𝐈𝐍𝐒</td><td class="val win math-bold" id="tblWins">𝟎</td></tr>
             <tr><td class="lbl math-bold">𝐋𝐎𝐒𝐒𝐄𝐒</td><td class="val loss math-bold" id="tblLosses">𝟎</td></tr>
-            <tr><td class="lbl math-bold">𝐒𝐊𝐈𝐏𝐏𝐄𝐃 (𝐒𝐀𝐅𝐄 𝐂𝐀𝐏𝐈𝐓𝐀𝐋 𝐏𝐀𝐒𝐒)</td><td class="val math-bold" id="tblSkips" style="color:#d97706">𝟎</td></tr>
+            <tr><td class="lbl math-bold">𝟐-𝟑𝐋 𝐅𝐈𝐗 𝐑𝐄𝐂𝐎𝐕𝐄𝐑𝐈𝐄𝐒</td><td class="val win math-bold" id="tblFixRecoveries">𝟎</td></tr>
             <tr><td class="lbl math-bold">𝐀𝐂𝐂𝐔𝐑𝐀𝐂𝐘</td><td class="val acc math-bold" id="tblAccuracy">𝟎%</td></tr>
             <tr><td class="lbl math-bold">𝐂𝐔𝐑𝐑𝐄𝐍𝐓 𝐒𝐓𝐑𝐄𝐀𝐊</td><td class="val math-bold" id="tblCurrentStreak">𝟎𝐖</td></tr>
             <tr><td class="lbl math-bold">𝐁𝐄𝐒𝐓 𝐖𝐈𝐍 𝐒𝐓𝐑𝐄𝐀𝐊</td><td class="val math-bold" id="tblBestStreak">𝟎𝐖</td></tr>
@@ -784,16 +1299,26 @@ body.ui-hidden .app{opacity:0;pointer-events:none}
         <!-- TIMER CONTROLS -->
         <div class="card" style="margin-top:8px">
           <div class="ctrl-row">
-            <button class="mode-btn" id="btn30" onclick="window.__ARX.selectMode('30s')">
+            <button class="mode-btn btn-mode-30" id="btn30" onclick="window.__ARX.selectMode('30s')">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               <span class="math-bold">𝟑𝟎 𝐒𝐄𝐂</span>
             </button>
-            <button class="mode-btn on" id="btn1m" onclick="window.__ARX.selectMode('1m')">
+            <button class="mode-btn on btn-mode-1m" id="btn1m" onclick="window.__ARX.selectMode('1m')">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               <span class="math-bold">𝟏 𝐌𝐈𝐍</span>
             </button>
           </div>
-          <button class="start-btn math-bold" id="startBtn" onclick="window.__ARX.toggleEngine()">▶ 𝐒𝐓𝐀𝐑𝐓 𝐍𝐎𝐕𝐈𝐗 𝐄𝐍𝐆𝐈𝐍𝐄</button>
+          <button class="start-btn engine-toggle-btn math-bold" id="startBtn" onclick="window.__ARX.toggleEngine()">
+            ▶ 𝐒𝐓𝐀𝐑𝐓 𝐍𝐎𝐕𝐈𝐗 𝐄𝐍𝐆𝐈𝐍𝐄
+          </button>
+          <div style="display:flex;gap:6px;margin-top:8px">
+            <button class="gc-play math-bold" style="flex:1;background:var(--bg-2);border:1px solid var(--border);color:var(--ink)" onclick="window.__ARX.runDemo()">
+              ⚡ 𝐓𝐄𝐒𝐓 𝐃𝐄𝐌𝐎
+            </button>
+            <button class="gc-play math-bold" style="flex:1;background:var(--bg-2);border:1px solid var(--border);color:var(--ink)" onclick="window.__ARX.switchTab('recovery')">
+              🔥 𝟐-𝟑𝐋 𝐅𝐈𝐗 𝐏𝐀𝐍𝐄𝐋
+            </button>
+          </div>
         </div>
 
         <!-- 3 ACTION CARDS FROM PHOTO -->
@@ -801,19 +1326,19 @@ body.ui-hidden .app{opacity:0;pointer-events:none}
           <div class="act-card" onclick="window.toast('Opening Telegram VIP Channel...')">
             <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
             <div class="ac-t math-bold">𝐉𝐎𝐈𝐍 𝐓𝐄𝐋𝐄𝐆𝐑𝐀𝐌</div>
-            <div class="ac-sub">DAILY UPDATES</div>
+            <div class="ac-sub math-bold">DAILY UPDATES</div>
             <div class="ac-desc">Fast & Accurate</div>
           </div>
           <div class="act-card" onclick="window.__ARX.openLock()">
             <svg viewBox="0 0 24 24"><path d="M2 18h20l-2 3H4zM3 7l4 4 5-7 5 7 4-4-2 9H5z"/></svg>
             <div class="ac-t math-bold">𝐏𝐑𝐄𝐌𝐈𝐔𝐌 𝐀𝐂𝐂𝐄𝐒𝐒</div>
-            <div class="ac-sub">VIP FEATURES</div>
+            <div class="ac-sub math-bold">VIP FEATURES</div>
             <div class="ac-desc">Unlock Full Power</div>
           </div>
           <div class="act-card" onclick="window.toast('✓ 100% Client-Side Safe & Encrypted')">
             <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
             <div class="ac-t math-bold">𝐒𝐀𝐅𝐄 & 𝐒𝐄𝐂𝐔𝐑𝐄</div>
-            <div class="ac-sub">100% TRUSTED</div>
+            <div class="ac-sub math-bold">100% TRUSTED</div>
             <div class="ac-desc">Your Data Priority</div>
           </div>
         </div>
@@ -823,7 +1348,7 @@ body.ui-hidden .app{opacity:0;pointer-events:none}
           <div class="ps-tag math-bold">👑 𝐏𝐋𝐀𝐘 𝐒𝐌𝐀𝐑𝐓</div>
           <div class="ps-center">
             <div class="ps-title math-bold">𝐀𝐑𝐗 𝐓𝐌 𝐍𝐎𝐕𝐈𝐗 𝐏𝐑𝐎 𝐀𝐈</div>
-            <div class="ps-sub">PREDICTION ENGINE</div>
+            <div class="ps-sub math-bold">PREDICTION ENGINE</div>
           </div>
           <div class="ps-tag math-bold" style="justify-content:flex-end">𝐖𝐈𝐍 𝐁𝐈𝐆 👑</div>
         </div>
@@ -847,7 +1372,7 @@ body.ui-hidden .app{opacity:0;pointer-events:none}
       <!-- SELECT GAME TAB VIEW (FEATURING TIGRO 666 & DKWIN 7) -->
       <div class="view" id="tab-game">
         <div class="card" style="margin-bottom:8px">
-          <div class="card-t math-bold">𝐒𝐄𝐋𝐄𝐂𝐓 𝐕𝐄𝐑𝐈𝐅𝐈𝐄𝐃 𝐏𝐋𝐀𝐓𝐅𝐎𝐑𝐌<span class="tag">𝐖𝐈𝐍-𝐆𝐎</span></div>
+          <div class="card-t math-bold">𝐒𝐄𝐋𝐄𝐂𝐓 𝐕𝐄𝐑𝐈𝐅𝐈𝐄𝐃 𝐏𝐋𝐀𝐓𝐅𝐎𝐑𝐌<span class="tag math-bold">𝐖𝐈𝐍-𝐆𝐎</span></div>
           <div id="gameNow" style="display:none;margin-bottom:10px">
             <div style="padding:10px;background:rgba(230,30,67,0.06);border-radius:12px;border:1px solid var(--primary-border)">
               <div style="font-family:Orbitron;font-size:11px;font-weight:900;color:var(--primary)" id="nowTitle">GAME RUNNING</div>
@@ -861,7 +1386,7 @@ body.ui-hidden .app{opacity:0;pointer-events:none}
 
           <!-- 1. TIGRO 666 (FEATURED AS REQUESTED) -->
           <div class="game-card featured">
-            <div class="gc-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);font-size:20px">🐯</div>
+            <div class="gc-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);font-size:22px">🐯</div>
             <div style="flex:1;min-width:0">
               <div style="display:flex;align-items:center;gap:6px">
                 <div class="math-bold" style="font-size:13px;font-weight:900;color:#d97706">𝐓𝐈𝐆𝐑𝐎 𝟔𝟔𝟔</div>
@@ -871,8 +1396,8 @@ body.ui-hidden .app{opacity:0;pointer-events:none}
                 Invite Code: <b style="color:var(--ink);font-family:JetBrains Mono">21571454474</b>
               </div>
               <div style="display:flex;gap:4px;margin-top:6px">
-                <button class="gc-copy" onclick="window.__ARX.copyInviteCode('21571454474','TIGRO 666')">📋 𝐂𝐎𝐏𝐘 𝐂𝐎𝐃𝐄</button>
-                <a href="https://www.tigro666.com/#/register?invitationCode=21571454474" target="_blank" class="gc-copy" style="text-decoration:none;display:inline-flex;align-items:center">↗ 𝐑𝐄𝐆𝐈𝐒𝐓𝐄𝐑</a>
+                <button class="gc-copy math-bold" onclick="window.__ARX.copyInviteCode('21571454474','TIGRO 666')">📋 𝐂𝐎𝐏𝐘 𝐂𝐎𝐃𝐄</button>
+                <a href="https://www.tigro666.com/#/register?invitationCode=21571454474" target="_blank" class="gc-copy math-bold" style="text-decoration:none;display:inline-flex;align-items:center">↗ 𝐑𝐄𝐆𝐈𝐒𝐓𝐄𝐑</a>
               </div>
             </div>
             <button class="gc-play math-bold" onclick="window.__ARX.playGame('https://www.tigro666.com/#/register?invitationCode=21571454474','TIGRO 666')">▶ 𝐏𝐋𝐀𝐘</button>
@@ -880,7 +1405,7 @@ body.ui-hidden .app{opacity:0;pointer-events:none}
 
           <!-- 2. DKWIN 7 (FEATURED AS REQUESTED) -->
           <div class="game-card vip-feat">
-            <div class="gc-icon" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9);font-size:20px">👑</div>
+            <div class="gc-icon" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9);font-size:22px">👑</div>
             <div style="flex:1;min-width:0">
               <div style="display:flex;align-items:center;gap:6px">
                 <div class="math-bold" style="font-size:13px;font-weight:900;color:#7c3aed">𝐃𝐊𝐖𝐈𝐍 𝟕</div>
@@ -890,8 +1415,8 @@ body.ui-hidden .app{opacity:0;pointer-events:none}
                 Invite Code: <b style="color:var(--ink);font-family:JetBrains Mono">15438314281</b>
               </div>
               <div style="display:flex;gap:4px;margin-top:6px">
-                <button class="gc-copy" onclick="window.__ARX.copyInviteCode('15438314281','DKWIN 7')">📋 𝐂𝐎𝐏𝐘 𝐂𝐎𝐃𝐄</button>
-                <a href="https://dkwin7.com/#/register?invitationCode=15438314281" target="_blank" class="gc-copy" style="text-decoration:none;display:inline-flex;align-items:center">↗ 𝐑𝐄𝐆𝐈𝐒𝐓𝐄𝐑</a>
+                <button class="gc-copy math-bold" onclick="window.__ARX.copyInviteCode('15438314281','DKWIN 7')">📋 𝐂𝐎𝐏𝐘 𝐂𝐎𝐃𝐄</button>
+                <a href="https://dkwin7.com/#/register?invitationCode=15438314281" target="_blank" class="gc-copy math-bold" style="text-decoration:none;display:inline-flex;align-items:center">↗ 𝐑𝐄𝐆𝐈𝐒𝐓𝐄𝐑</a>
               </div>
             </div>
             <button class="gc-play math-bold" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9)" onclick="window.__ARX.playGame('https://dkwin7.com/#/register?invitationCode=15438314281','DKWIN 7')">▶ 𝐏𝐋𝐀𝐘</button>
@@ -929,7 +1454,7 @@ body.ui-hidden .app{opacity:0;pointer-events:none}
       <div class="view" id="tab-history">
         <div class="card" style="margin-bottom:8px">
           <div class="card-head">
-            <div class="ch-title math-bold">𝐇𝐈𝐒𝐓𝐎𝐑𝐘 𝐑𝐄𝐂𝐎𝐑𝐃𝐒<small id="histCount">0 ROUNDS</small></div>
+            <div class="ch-title math-bold">𝐇𝐈𝐒𝐓𝐎𝐑𝐘 𝐑𝐄𝐂𝐎𝐑𝐃𝐒<small id="histCount" class="math-bold">0 ROUNDS</small></div>
             <div class="math-bold" style="font-size:11px;font-weight:900;color:var(--primary)" id="histRate">—</div>
           </div>
           <div class="trail" style="display:flex;align-items:center;gap:6px;padding:6px;background:var(--bg-2);border-radius:10px;margin-bottom:8px">
@@ -943,21 +1468,21 @@ body.ui-hidden .app{opacity:0;pointer-events:none}
       <!-- PROFILE TAB VIEW -->
       <div class="view" id="tab-profile">
         <div class="card" style="margin-bottom:8px">
-          <div class="card-t math-bold">𝐀𝐑𝐗 𝐓𝐌 𝐍𝐎𝐕𝐈𝐗 𝐏𝐑𝐎𝐅𝐈𝐋𝐄<span class="tag">𝐕𝐈𝐏</span></div>
+          <div class="card-t math-bold">𝐀𝐑𝐗 𝐓𝐌 𝐍𝐎𝐕𝐈𝐗 𝐏𝐑𝐎𝐅𝐈𝐋𝐄<span class="tag math-bold">𝐕𝐈𝐏</span></div>
           <div style="display:flex;align-items:center;gap:12px;margin-top:10px;padding:12px;background:var(--card-solid);border-radius:16px;border:1px solid var(--border)">
             <div style="width:48px;height:48px;border-radius:14px;background:var(--grad-primary);display:flex;align-items:center;justify-content:center;color:#fff;font-family:Orbitron;font-size:16px;font-weight:900">
               ARX
             </div>
             <div style="flex:1">
               <div class="math-bold" style="font-size:13px;font-weight:900;color:var(--ink)">𝐀𝐁𝐈𝐑 𝐇𝐀𝐒𝐒𝐀𝐍</div>
-              <div style="font-size:9px;color:var(--muted);margin-top:2px" id="profileTagText">PREMIUM VIP MEMBER</div>
+              <div style="font-size:9px;color:var(--muted);margin-top:2px" id="profileTagText" class="math-bold">PREMIUM VIP MEMBER</div>
             </div>
             <button class="gc-play math-bold" onclick="window.__ARX.openLock()" style="padding:6px 12px;font-size:9px" id="lockBtn">🔓 𝐕𝐈𝐏 𝐊𝐄𝐘</button>
           </div>
         </div>
 
         <div class="card" style="margin-bottom:8px">
-          <div class="card-t math-bold">𝐓𝐇𝐄𝐌𝐄 𝐒𝐄𝐋𝐄𝐂𝐓𝐈𝐎𝐍<span class="tag">𝐏𝐇𝐎𝐓𝐎 𝐒𝐓𝐘𝐋𝐄</span></div>
+          <div class="card-t math-bold">𝐓𝐇𝐄𝐌𝐄 𝐒𝐄𝐋𝐄𝐂𝐓𝐈𝐎𝐍<span class="tag math-bold">𝐏𝐇𝐎𝐓𝐎 𝐒𝐓𝐘𝐋𝐄</span></div>
           <div class="theme-grid" id="themeGrid" style="margin-top:8px"></div>
         </div>
 
@@ -1009,7 +1534,7 @@ body.ui-hidden .app{opacity:0;pointer-events:none}
 <div class="drawer" id="drawer">
   <div class="drawer-head">
     <div class="math-bold" style="font-size:16px;font-weight:900">𝐀𝐑𝐗 𝐓𝐌 𝐍𝐎𝐕𝐈𝐗 𝐏𝐑𝐎 𝐀𝐈</div>
-    <div style="font-size:9px;opacity:.9;margin-top:3px">AI PREDICTION ENGINE • B3.9</div>
+    <div style="font-size:9px;opacity:.9;margin-top:3px" class="math-bold">AI PREDICTION ENGINE • B3.9</div>
   </div>
   <div class="drawer-menu">
     <div class="item math-bold" onclick="window.__ARX.closeDrawer();window.__ARX.switchTab('home')">
@@ -1031,6 +1556,14 @@ body.ui-hidden .app{opacity:0;pointer-events:none}
     <div class="item math-bold" onclick="window.__ARX.closeDrawer();window.__ARX.switchTab('engine')">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       <span>𝐀𝐈 𝐄𝐍𝐆𝐈𝐍𝐄 𝐀𝐍𝐀𝐋𝐘𝐒𝐈𝐒</span>
+    </div>
+    <div class="item math-bold" id="drawerDesktopItem" onclick="window.__ARX.closeDrawer();window.__ARX.toggleDesktopMode()">
+      <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      <span id="drawerDesktopTxt">🖥️ 𝐃𝐄𝐒𝐊𝐓𝐎𝐏 𝐌𝐎𝐃𝐄</span>
+    </div>
+    <div class="item math-bold" id="drawerFsItem" onclick="window.__ARX.closeDrawer();window.__ARX.toggleFullScreen()">
+      <svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+      <span id="drawerFsTxt">⛶ 𝐅𝐔𝐋𝐋 𝐒𝐂𝐑𝐄𝐄𝐍 𝐕𝐈𝐄𝐖</span>
     </div>
     <div class="item math-bold" onclick="window.__ARX.closeDrawer();window.__ARX.openLock()">
       <svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
